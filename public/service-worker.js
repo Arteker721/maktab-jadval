@@ -1,5 +1,5 @@
 // ============ CACHE VERSIYASI ============
-const CACHE_NAME = 'maktab-jadval-v1';
+const CACHE_NAME = 'maktab-jadval-v2';
 
 // ============ KESHLANADIGAN FAYLLAR ============
 const FILES_TO_CACHE = [

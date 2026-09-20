@@ -149,6 +149,10 @@ async function showApp() {
     document.querySelector('[data-view="admin"]').classList.remove('hidden');
   }
 
+    // Bottom nav va FAB ni ko'rsatish
+  $('bottomNav')?.classList.remove('hidden');
+  $('fabBtn')?.classList.remove('hidden');
+  
   initBottomNav();
   updateFabVisibility();
   await loadAll();
