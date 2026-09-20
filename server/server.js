@@ -376,13 +376,26 @@ app.use((err, req, res, next) => {
 });
 
 // ============ START ============
-mongoose.connect(MONGO_URI, {
-  serverSelectionTimeoutMS: 30000 // 30 soniya kutish
-})
-.then(async () => {
-  console.log('✅ MongoDB Atlas\'ga ulandi');
-  await initData(); // Endi initData ulangandan KEYIN ishga tushadi
-  
+async function startServer() {
+  try {
+    // 1. MongoDB'ga ulanish
+    await mongoose.connect(MONGO_URI, {
+      serverSelectionTimeoutMS: 30000 // 30 soniya kutish
+    });
+    console.log('✅ MongoDB Atlas\'ga ulandi');
+
+    // 2. Muhim: MongoDB to'liq tayyor bo'lishi uchun 3 soniya kutamiz
+    await new Promise(resolve => setTimeout(resolve, 3000));
+
+    // 3. Boshlang'ich ma'lumotlarni yozish
+    await initData();
+
+  } catch (err) {
+    console.error('❌ Xatosi:', err.message);
+    // Xato bo'lsa ham server ishga tushaveradi
+  }
+
+  // 4. Serverni ishga tushirish (har qanday holatda ham)
   app.listen(PORT, () => {
     console.log('');
     console.log('╔════════════════════════════════════════╗');
@@ -393,10 +406,7 @@ mongoose.connect(MONGO_URI, {
     console.log('║   👤 Admin:   admin / admin123         ║');
     console.log('║   👨‍🏫 Teacher: teacher / teacher123     ║');
     console.log('╚════════════════════════════════════════╝');
-    console.log('');
   });
-})
-.catch(err => {
-  console.error('❌ MongoDB xatosi:', err.message);
-  process.exit(1);
-});
+}
+
+startServer();
