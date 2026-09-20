@@ -407,26 +407,20 @@ app.use((err, req, res, next) => {
 });
 
 // ============ START ============
-async function startServer() {
-  try {
-    // 1. MongoDB'ga ulanish
-    await mongoose.connect(MONGO_URI, {
-      serverSelectionTimeoutMS: 30000 // 30 soniya kutish
-    });
-    console.log('✅ MongoDB Atlas\'ga ulandi');
+mongoose.connect(MONGO_URI, {
+  serverSelectionTimeoutMS: 120000,
+  connectTimeoutMS: 120000,
+  socketTimeoutMS: 120000,
+  family: 4,
+  bufferCommands: true,
+  bufferTimeoutMS: 120000,
+  maxPoolSize: 5,
+  minPoolSize: 1
+})
+.then(() => {
+  console.log('✅ MongoDB Atlas\'ga ulandi');
 
-    // 2. Muhim: MongoDB to'liq tayyor bo'lishi uchun 20 soniya kutamiz
-    await new Promise(resolve => setTimeout(resolve, 20000));
-
-    // 3. Boshlang'ich ma'lumotlarni yozish
-    await initData();
-
-  } catch (err) {
-    console.error('❌ Xatosi:', err.message);
-    // Xato bo'lsa ham server ishga tushaveradi
-  }
-
-  // 4. Serverni ishga tushirish (har qanday holatda ham)
+  // ⚡ MUHIM: Serverni DARHOL ishga tushiramiz!
   app.listen(PORT, () => {
     console.log('');
     console.log('╔════════════════════════════════════════╗');
@@ -437,7 +431,19 @@ async function startServer() {
     console.log('║   👤 Admin:   admin / admin123         ║');
     console.log('║   👨‍🏫 Teacher: teacher / teacher123     ║');
     console.log('╚════════════════════════════════════════╝');
+    console.log('');
   });
-}
 
-startServer();
+  // 📦 initData ni ORQA FONDA ishga tushiramiz
+  // Server allaqachon ishlayapti, shuning uchun Render "No open ports" demaydi
+  console.log('📦 Ma\'lumotlar bazasi tekshirilmoqda (orqa fonda)...');
+  
+  initData()
+    .then(() => console.log('✅ Ma\'lumotlar bazasi tayyor!'))
+    .catch(err => console.error('⚠️ initData xatosi:', err.message));
+
+})
+.catch(err => {
+  console.error('❌ MongoDB xatosi:', err.message);
+  process.exit(1);
+});
