@@ -421,3 +421,219 @@ body.dark .lesson-cell { background: linear-gradient(135deg, #1e293b, #334155); 
   .lesson-cell:active { transform: scale(0.98); }
   .stat-card:hover { transform: none; }
 }
+/* ============ KUN TANLASH (telefon) ============ */
+.day-selector {
+  display: none;
+  gap: 6px;
+  margin-bottom: 12px;
+  padding: 6px;
+  background: var(--card);
+  border-radius: 14px;
+  box-shadow: var(--shadow-sm);
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.day-selector::-webkit-scrollbar { display: none; }
+
+.day-tab {
+  flex: 1;
+  min-width: 50px;
+  padding: 10px 6px;
+  border: none;
+  background: transparent;
+  border-radius: 10px;
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: var(--text-light);
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: 'Inter', sans-serif;
+}
+
+.day-tab.active {
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  color: white;
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+}
+
+.day-tab:active { transform: scale(0.95); }
+
+/* ============ KUN SARLAVHASI ============ */
+.day-header {
+  display: none;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  color: white;
+  padding: 16px 20px;
+  border-radius: 16px;
+  margin-bottom: 15px;
+  box-shadow: 0 6px 20px rgba(99, 102, 241, 0.3);
+  align-items: center;
+  justify-content: space-between;
+}
+
+.day-header-date {
+  font-size: 1.1rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.day-header-count {
+  font-size: 0.8rem;
+  opacity: 0.9;
+  margin-top: 2px;
+}
+
+.day-header-icon {
+  font-size: 2rem;
+  opacity: 0.5;
+}
+
+/* ============ KUNLIK DARSLAR ============ */
+.day-lessons {
+  display: none;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.day-lesson-card {
+  background: var(--card);
+  border-radius: 16px;
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  box-shadow: var(--shadow-sm);
+  border-left: 5px solid var(--primary);
+  transition: all 0.2s;
+  position: relative;
+  animation: cardIn 0.3s ease backwards;
+}
+
+@keyframes cardIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.day-lesson-card:active { transform: scale(0.98); }
+
+.day-lesson-card.current {
+  background: linear-gradient(135deg, #fef3c7, #fde68a);
+  border-left-color: #f59e0b;
+}
+
+body.dark .day-lesson-card.current {
+  background: linear-gradient(135deg, #422006, #78350f);
+}
+
+.day-lesson-num {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: var(--bg);
+  color: var(--primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 0.95rem;
+  flex-shrink: 0;
+}
+
+body.dark .day-lesson-num { background: #334155; }
+
+.day-lesson-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.day-lesson-subject {
+  font-weight: 700;
+  font-size: 1rem;
+  color: var(--text);
+  margin-bottom: 2px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.day-lesson-time {
+  font-size: 0.8rem;
+  color: var(--primary);
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.day-lesson-meta {
+  font-size: 0.72rem;
+  color: var(--text-light);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.day-lesson-meta span {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.day-lesson-actions {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.day-lesson-actions button {
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.day-lesson-actions .edit-btn {
+  background: #eff6ff;
+  color: var(--primary);
+}
+
+.day-lesson-actions .delete-btn {
+  background: #fee2e2;
+  color: var(--danger);
+}
+
+.day-lesson-actions button:active { transform: scale(0.9); }
+
+/* ============ KUN BO'SH ============ */
+.day-empty {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--text-light);
+}
+
+.day-empty-icon {
+  font-size: 3rem;
+  margin-bottom: 10px;
+  opacity: 0.5;
+}
+
+.day-empty-text {
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+/* ============ TELEFON UCHUN ============ */
+@media (max-width: 768px) {
+  .day-selector,
+  .day-header,
+  .day-lessons { display: flex; }
+  .day-lessons { display: flex; flex-direction: column; }
+  
+  .desktop-only { display: none !important; }
+}

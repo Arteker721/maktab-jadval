@@ -8,16 +8,14 @@
   <meta name="theme-color" content="#6366f1">
   <link rel="icon" type="image/svg+xml" href="/icon.svg">
   <link rel="apple-touch-icon" href="/icon.svg">
-  <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="Jadval">
   <link rel="stylesheet" href="style.css">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 </head>
 <body>
 
-  <!-- ============ LOGIN SAHIFASI ============ -->
+  <!-- ============ LOGIN ============ -->
   <div id="loginScreen" class="login-screen">
     <div class="login-box">
       <div class="login-logo">📚</div>
@@ -69,6 +67,7 @@
       </div>
     </header>
 
+    <!-- Yuqoridagi tabs (noutbuk uchun) -->
     <nav class="tabs">
       <button class="tab active" data-view="schedule">📅 Jadval</button>
       <button class="tab" data-view="homework">📝 Uy vazifasi</button>
@@ -79,7 +78,30 @@
 
     <!-- JADVAL -->
     <section id="view-schedule" class="view">
-      <div class="controls">
+      <!-- Kun tanlash (telefon uchun) -->
+      <div class="day-selector" id="daySelector">
+        <button class="day-tab" data-day="Dushanba">Du</button>
+        <button class="day-tab" data-day="Seshanba">Se</button>
+        <button class="day-tab" data-day="Chorshanba">Cho</button>
+        <button class="day-tab" data-day="Payshanba">Pay</button>
+        <button class="day-tab" data-day="Juma">Ju</button>
+        <button class="day-tab" data-day="Shanba">Sha</button>
+      </div>
+
+      <!-- BUGUNGI MA'LUMOT (telefon uchun) -->
+      <div class="day-header" id="dayHeader">
+        <div>
+          <div class="day-header-date" id="dayHeaderDate">—</div>
+          <div class="day-header-count" id="dayHeaderCount">— dars</div>
+        </div>
+        <div class="day-header-icon">📅</div>
+      </div>
+
+      <!-- Kunlik kartochkalar (telefon uchun) -->
+      <div class="day-lessons" id="dayLessons"></div>
+
+      <!-- Jadval (noutbuk uchun) -->
+      <div class="controls desktop-only">
         <input type="text" id="searchInput" placeholder="🔍 Fan yoki o'qituvchi...">
         <select id="dayFilter">
           <option value="all">Barcha kunlar</option>
@@ -92,7 +114,7 @@
         </select>
         <button id="addLessonBtn" class="add-btn hidden">➕ Dars qo'shish</button>
       </div>
-      <div class="table-section">
+      <div class="table-section desktop-only">
         <table id="scheduleTable">
           <thead>
             <tr>
@@ -147,16 +169,11 @@
           <div id="subjectsList"></div>
           <button id="addSubjectBtn" class="small-btn">➕ Fan qo'shish</button>
         </div>
-        <div class="admin-card">
-          <h3>📤 Import / Eksport</h3>
-          <button id="exportBtn" class="small-btn">📥 Eksport (JSON)</button>
-          <button id="importBtn" class="small-btn">📤 Import (JSON)</button>
-        </div>
       </div>
     </section>
   </div>
 
-  <!-- ============ PASTKI MENYU (Telefon) ============ -->
+  <!-- ============ PASTKI MENYU ============ -->
   <nav id="bottomNav" class="bottom-nav hidden">
     <button class="bottom-nav-item active" data-view="schedule">
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -190,7 +207,7 @@
     </button>
   </nav>
 
-  <!-- ============ FAB (➕ tugmasi) ============ -->
+  <!-- FAB -->
   <button id="fabBtn" class="fab-btn hidden">
     <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
       <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>

@@ -9,6 +9,7 @@ let notes = [];
 let announcements = [];
 let users = [];
 let favorites = [];
+let selectedDay = null;
 
 async function api(path, opts = {}) {
   const headers = { 'Content-Type': 'application/json', ...(opts.headers || {}) };
@@ -21,6 +22,7 @@ async function api(path, opts = {}) {
 
 // ============ HELPERS ============
 function $(id) { return document.getElementById(id); }
+
 function toast(msg, type = 'info') {
   const t = $('toast');
   if (!t) return;
@@ -30,12 +32,21 @@ function toast(msg, type = 'info') {
   clearTimeout(t._timer);
   t._timer = setTimeout(() => t.classList.add('hidden'), 2500);
 }
+
 function escapeHtml(s) {
   return String(s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
+
 function getTodayName() {
   const map = { 1: 'Dushanba', 2: 'Seshanba', 3: 'Chorshanba', 4: 'Payshanba', 5: 'Juma', 6: 'Shanba' };
-  return map[new Date().getDay()] || null;
+  return map[new Date().getDay()] || 'Dushanba';
+}
+
+function getTodayDate() {
+  const days = ['yakshanba', 'dushanba', 'seshanba', 'chorshanba', 'payshanba', 'juma', 'shanba'];
+  const months = ['yanvar', 'fevral', 'mart', 'aprel', 'may', 'iyun', 'iyul', 'avgust', 'sentabr', 'oktabr', 'noyabr', 'dekabr'];
+  const d = new Date();
+  return `${days[d.getDay()].charAt(0).toUpperCase() + days[d.getDay()].slice(1)}, ${d.getDate()}-${months[d.getMonth()]}`;
 }
 
 // ============ AUTH ============
@@ -109,16 +120,14 @@ document.querySelectorAll('.tab').forEach(tab => {
     document.querySelectorAll('.view').forEach(v => v.classList.add('hidden'));
     const view = tab.dataset.view;
     $('view-' + view).classList.remove('hidden');
-    
-    // Bottom nav ni sinxronlashtirish
+
     document.querySelectorAll('.bottom-nav-item').forEach(btn => {
       if (btn.dataset.view === view) btn.classList.add('active');
       else btn.classList.remove('active');
     });
-    
-    // FAB yangilash
+
     updateFabVisibility();
-    
+
     if (view === 'homework') loadHomework();
     if (view === 'notes') loadNotes();
     if (view === 'announcements') loadAnnouncements();
@@ -149,25 +158,28 @@ async function showApp() {
     document.querySelector('[data-view="admin"]').classList.remove('hidden');
   }
 
-    // Bottom nav va FAB ni ko'rsatish
+  // Bottom nav va FAB ni ko'rsatish
   $('bottomNav')?.classList.remove('hidden');
   $('fabBtn')?.classList.remove('hidden');
-  
+
   initBottomNav();
+  initDaySelector();
   updateFabVisibility();
+
   await loadAll();
 }
 
 async function loadAll() {
   await Promise.all([loadSubjects(), loadLessons(), loadFavorites()]);
   renderSchedule();
+  renderDayView();
 }
 
 async function loadSubjects() { try { subjects = await api('/subjects'); } catch {} }
 async function loadLessons() { try { lessons = await api('/lessons'); } catch {} }
 async function loadFavorites() { try { favorites = await api('/favorites'); } catch {} }
 
-// ============ RENDER SCHEDULE ============
+// ============ SCHEDULE (noutbuk uchun jadval) ============
 const days = ['Dushanba', 'Seshanba', 'Chorshanba', 'Payshanba', 'Juma', 'Shanba'];
 const timeSlots = ['08:00', '09:00', '10:00', '11:00', '12:00', '13:00'];
 
@@ -178,6 +190,7 @@ function getSubjectColor(subjectName) {
 
 function renderSchedule() {
   const tbody = $('scheduleBody');
+  if (!tbody) return;
   tbody.innerHTML = '';
   const search = $('searchInput').value.toLowerCase().trim();
   const dayFilter = $('dayFilter').value;
@@ -228,6 +241,105 @@ function renderSchedule() {
   });
 }
 
+// ============ KUNLIK KO'RINISH (telefon uchun) ============
+function renderDayView() {
+  const container = $('dayLessons');
+  const headerDate = $('dayHeaderDate');
+  const headerCount = $('dayHeaderCount');
+  if (!container) return;
+
+  const today = getTodayName();
+  const day = selectedDay || today;
+
+  if (headerDate) {
+    headerDate.textContent = day === today ? `Bugun — ${day}` : day;
+  }
+
+  document.querySelectorAll('.day-tab').forEach(tab => {
+    tab.classList.toggle('active', tab.dataset.day === day);
+  });
+
+  const dayLessons = lessons
+    .filter(l => l.day === day)
+    .sort((a, b) => a.start.localeCompare(b.start));
+
+  if (headerCount) {
+    headerCount.textContent = dayLessons.length === 0
+      ? "Dars yo'q"
+      : `${dayLessons.length} ta dars`;
+  }
+
+  if (dayLessons.length === 0) {
+    container.innerHTML = `
+      <div class="day-empty">
+        <div class="day-empty-icon">🏖️</div>
+        <div class="day-empty-text">Bu kunda darslar yo'q</div>
+        <div style="font-size:0.8rem; margin-top:8px; opacity:0.7;">Dam oling! 😊</div>
+      </div>
+    `;
+    return;
+  }
+
+  const now = new Date();
+  const curTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+  const isToday = day === today;
+
+  container.innerHTML = dayLessons.map((lesson, i) => {
+    const color = getSubjectColor(lesson.subject);
+    const isCurrent = isToday && lesson.start <= curTime && lesson.end >= curTime;
+    const isFav = favorites.some(f => f.lessonId === lesson.id);
+
+    return `
+      <div class="day-lesson-card ${isCurrent ? 'current' : ''}"
+           style="border-left-color: ${color}; animation-delay: ${i * 0.05}s">
+        <div class="day-lesson-num">${i + 1}</div>
+        <div class="day-lesson-body">
+          <div class="day-lesson-subject">${isCurrent ? '🔴 ' : ''}${isFav ? '⭐ ' : ''}${escapeHtml(lesson.subject)}</div>
+          <div class="day-lesson-time">⏰ ${lesson.start} — ${lesson.end}</div>
+          <div class="day-lesson-meta">
+            <span>👨‍🏫 ${escapeHtml(lesson.teacher || '—')}</span>
+            <span>🚪 ${escapeHtml(lesson.room || '—')}</span>
+          </div>
+        </div>
+        ${currentUser && currentUser.role !== 'student' ? `
+          <div class="day-lesson-actions">
+            <button class="edit-btn" data-edit="${lesson.id}">✏️</button>
+            <button class="delete-btn" data-del="${lesson.id}">🗑️</button>
+          </div>
+        ` : ''}
+      </div>
+    `;
+  }).join('');
+
+  container.querySelectorAll('[data-edit]').forEach(btn => {
+    btn.onclick = (e) => {
+      e.stopPropagation();
+      const lesson = lessons.find(l => l.id === btn.dataset.edit);
+      if (lesson) openLessonModal(lesson);
+    };
+  });
+  container.querySelectorAll('[data-del]').forEach(btn => {
+    btn.onclick = (e) => {
+      e.stopPropagation();
+      deleteLesson(btn.dataset.del);
+    };
+  });
+}
+
+function initDaySelector() {
+  const selector = $('daySelector');
+  if (!selector) return;
+  selectedDay = getTodayName();
+  selector.querySelectorAll('.day-tab').forEach(tab => {
+    tab.onclick = () => {
+      selectedDay = tab.dataset.day;
+      renderDayView();
+    };
+  });
+  renderDayView();
+}
+
+// ============ FILTRLAR ============
 $('searchInput').addEventListener('input', renderSchedule);
 $('dayFilter').addEventListener('change', renderSchedule);
 
@@ -280,6 +392,7 @@ function openLessonModal(lesson = null) {
       else await api('/lessons', { method: 'POST', body: JSON.stringify(data) });
       await loadLessons();
       renderSchedule();
+      renderDayView();
       closeModal();
       toast('✅ Saqlandi');
     } catch (e) { toast('❌ ' + e.message, 'error'); }
@@ -292,6 +405,7 @@ async function deleteLesson(id) {
     await api('/lessons/' + id, { method: 'DELETE' });
     await loadLessons();
     renderSchedule();
+    renderDayView();
     toast('🗑️ O\'chirildi');
   } catch (e) { toast('❌ ' + e.message, 'error'); }
 }
@@ -316,7 +430,7 @@ async function loadHomework() {
 }
 window.delHw = async (id) => {
   if (!confirm('O\'chirmoqchimisiz?')) return;
-  try { await api('/homework/' + id, { method: 'DELETE' }); loadHomework(); toast('🗑️ O\'chirildi'); }
+  try { await api('/homework/' + id, { method: 'DELETE' }); loadHomework(); toast('🗑️'); }
   catch (e) { toast('❌ ' + e.message, 'error'); }
 };
 $('addHwBtn').addEventListener('click', () => {
@@ -356,7 +470,7 @@ async function loadNotes() {
   } catch (e) { toast('❌ ' + e.message, 'error'); }
 }
 window.delNote = async (id) => {
-  try { await api('/notes/' + id, { method: 'DELETE' }); loadNotes(); toast('🗑️ O\'chirildi'); }
+  try { await api('/notes/' + id, { method: 'DELETE' }); loadNotes(); toast('🗑️'); }
   catch (e) { toast('❌ ' + e.message, 'error'); }
 };
 $('noteForm').addEventListener('submit', async (e) => {
@@ -388,7 +502,7 @@ async function loadAnnouncements() {
 }
 window.delAnn = async (id) => {
   if (!confirm('O\'chirmoqchimisiz?')) return;
-  try { await api('/announcements/' + id, { method: 'DELETE' }); loadAnnouncements(); toast('🗑️ O\'chirildi'); }
+  try { await api('/announcements/' + id, { method: 'DELETE' }); loadAnnouncements(); toast('🗑️'); }
   catch (e) { toast('❌ ' + e.message, 'error'); }
 };
 $('addAnnBtn').addEventListener('click', () => {
@@ -434,7 +548,7 @@ async function loadAdmin() {
 }
 window.delUser = async (id) => {
   if (!confirm('O\'chirmoqchimisiz?')) return;
-  try { await api('/users/' + id, { method: 'DELETE' }); loadAdmin(); toast('🗑️ O\'chirildi'); }
+  try { await api('/users/' + id, { method: 'DELETE' }); loadAdmin(); toast('🗑️'); }
   catch (e) { toast('❌ ' + e.message, 'error'); }
 };
 window.delSubject = async (id) => {
@@ -457,37 +571,9 @@ $('addSubjectBtn').addEventListener('click', () => {
       await api('/subjects', { method: 'POST', body: JSON.stringify({
         name: $('subName').value, color: $('subColor').value
       })});
-      await loadSubjects(); closeModal(); loadAdmin(); toast('✅');
+      await loadSubjects(); closeModal(); loadAdmin(); renderSchedule(); renderDayView(); toast('✅');
     } catch (e) { toast('❌ ' + e.message, 'error'); }
   });
-});
-
-$('exportBtn').addEventListener('click', async () => {
-  try {
-    const data = await api('/export').catch(() => ({ lessons, subjects, homework }));
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url; a.download = 'maktab-jadval-export.json';
-    a.click(); URL.revokeObjectURL(url);
-    toast('📥 Eksport qilindi');
-  } catch (e) { toast('❌ ' + e.message, 'error'); }
-});
-
-$('importBtn').addEventListener('click', () => {
-  const input = document.createElement('input');
-  input.type = 'file'; input.accept = '.json';
-  input.onchange = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    try {
-      const text = await file.text();
-      const data = JSON.parse(text);
-      await api('/import', { method: 'POST', body: JSON.stringify(data) }).catch(() => {});
-      await loadAll(); loadAdmin(); toast('✅ Import');
-    } catch (e) { toast('❌ ' + e.message, 'error'); }
-  };
-  input.click();
 });
 
 // ============ BOTTOM NAVIGATION ============
@@ -507,7 +593,7 @@ function initBottomNav() {
       const activeView = document.querySelector('.view:not(.hidden)');
       if (!activeView) return;
       const viewId = activeView.id;
-      
+
       if (viewId === 'view-schedule') openLessonModal();
       else if (viewId === 'view-homework') $('addHwBtn')?.click();
       else if (viewId === 'view-announcements') $('addAnnBtn')?.click();
@@ -518,15 +604,15 @@ function initBottomNav() {
 function updateFabVisibility() {
   const fab = $('fabBtn');
   if (!fab) return;
-  
+
   if (!currentUser || currentUser.role === 'student') {
     fab.classList.add('hidden');
     return;
   }
-  
+
   const activeView = document.querySelector('.view:not(.hidden)');
   if (!activeView) { fab.classList.add('hidden'); return; }
-  
+
   const viewId = activeView.id;
   if (['view-schedule', 'view-homework', 'view-announcements'].includes(viewId)) {
     fab.classList.remove('hidden');
@@ -534,23 +620,6 @@ function updateFabVisibility() {
     fab.classList.add('hidden');
   }
 }
-
-// ============ QURILMA ANIQLASH ============
-function detectDevice() {
-  const width = window.innerWidth;
-  const ua = navigator.userAgent;
-  const isPhone = /iPhone|iPod|Android.*Mobile|Windows Phone/i.test(ua);
-  const isTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
-  
-  if (isPhone || (width <= 480 && isTouch)) return { type: 'phone', icon: '📱' };
-  if (width <= 768 && isTouch) return { type: 'tablet', icon: '📱' };
-  return { type: 'desktop', icon: '💻' };
-}
-
-window.addEventListener('resize', () => {
-  clearTimeout(window._resizeTimer);
-  window._resizeTimer = setTimeout(() => updateFabVisibility(), 300);
-});
 
 // ============ INTERNET ============
 window.addEventListener('online', () => toast('✅ Internet qaytdi'));
@@ -576,7 +645,7 @@ function showInstallButton() {
   btn.id = 'pwaInstallBtn';
   btn.innerHTML = '📲 Ilovani o\'rnatish';
   btn.style.cssText = `
-    position: fixed; bottom: 20px; right: 20px; padding: 14px 22px;
+    position: fixed; bottom: 90px; right: 20px; padding: 14px 22px;
     background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white;
     border: none; border-radius: 14px; font-size: 0.95rem; font-weight: 700;
     cursor: pointer; z-index: 9999; box-shadow: 0 10px 30px rgba(99,102,241,0.4);
