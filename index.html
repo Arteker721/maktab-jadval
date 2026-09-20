@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Maktab Dars Jadvali</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <!-- ============ LOGIN SAHIFASI ============ -->
+  <div id="loginScreen" class="login-screen">
+    <div class="login-box">
+      <div class="login-logo">📚</div>
+      <h1>Maktab Jadvali</h1>
+      <p>Davom etish uchun sinfingizni tanlang</p>
+
+      <div class="login-form">
+        <label>👤 Ismingiz</label>
+        <input type="text" id="loginName" placeholder="Masalan: Aziz" autocomplete="off">
+
+        <label>🏫 Sinfingiz</label>
+        <select id="loginClass">
+          <option value="">Sinf tanlang</option>
+          <option value="5-A">5-A</option>
+          <option value="6-A">6-A</option>
+          <option value="7-A">7-A</option>
+          <option value="8-A">8-A</option>
+          <option value="9-A">9-A</option>
+          <option value="10-A">10-A</option>
+          <option value="11-A">11-A</option>
+        </select>
+
+        <button id="loginBtn">Kirish →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ ASOSIY SAYT ============ -->
+  <div id="app" class="app hidden">
+
+    <!-- HEADER -->
+    <header class="header">
+      <div class="header-left">
+        <div class="logo">📚</div>
+        <div>
+          <h1>Maktab Jadvali</h1>
+          <p id="userInfo">—</p>
+        </div>
+      </div>
+      <button id="logoutBtn" class="logout-btn">Chiqish</button>
+    </header>
+
+    <!-- STATISTIKA KARTALARI -->
+    <section class="stats">
+      <div class="stat-card">
+        <div class="stat-icon">📖</div>
+        <div>
+          <div class="stat-value" id="todayCount">0</div>
+          <div class="stat-label">Bugungi darslar</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">⏰</div>
+        <div>
+          <div class="stat-value" id="nextLesson">—</div>
+          <div class="stat-label">Keyingi dars</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">📅</div>
+        <div>
+          <div class="stat-value" id="currentDay">—</div>
+          <div class="stat-label">Bugun</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TABLAR (Kunlik / Haftalik) -->
+    <section class="tabs">
+      <button class="tab active" data-view="week">📅 Haftalik</button>
+      <button class="tab" data-view="day">📆 Kunlik</button>
+    </section>
+
+    <!-- QIDIRUV VA FILTR -->
+    <section class="controls">
+      <input type="text" id="searchInput" placeholder="🔍 Fan yoki o'qituvchi qidirish...">
+      <select id="dayFilter">
+        <option value="all">Barcha kunlar</option>
+        <option value="Dushanba">Dushanba</option>
+        <option value="Seshanba">Seshanba</option>
+        <option value="Chorshanba">Chorshanba</option>
+        <option value="Payshanba">Payshanba</option>
+        <option value="Juma">Juma</option>
+        <option value="Shanba">Shanba</option>
+      </select>
+      <button id="addBtn" class="add-btn">➕ Dars qo'shish</button>
+    </section>
+
+    <!-- HAFTALIK JADVAL -->
+    <section id="weekView" class="table-section">
+      <table id="scheduleTable">
+        <thead>
+          <tr>
+            <th>Vaqt</th>
+            <th>Dushanba</th>
+            <th>Seshanba</th>
+            <th>Chorshanba</th>
+            <th>Payshanba</th>
+            <th>Juma</th>
+            <th>Shanba</th>
+          </tr>
+        </thead>
+        <tbody id="scheduleBody"></tbody>
+      </table>
+    </section>
+
+    <!-- KUNLIK KO'RINISH -->
+    <section id="dayView" class="day-view hidden">
+      <h2 id="dayViewTitle">Bugungi darslar</h2>
+      <div id="dayViewList" class="day-list"></div>
+    </section>
+
+  </div>
+
+  <!-- ============ MODAL (Dars qo'shish/tahrirlash) ============ -->
+  <div id="modal" class="modal hidden">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 id="modalTitle">➕ Yangi dars qo'shish</h2>
+        <button id="closeModal" class="close-btn">✕</button>
+      </div>
+
+      <form id="lessonForm">
+        <input type="hidden" id="editId">
+
+        <div class="form-row">
+          <label>Kun</label>
+          <select id="newDay" required>
+            <option value="">Tanlang</option>
+            <option value="Dushanba">Dushanba</option>
+            <option value="Seshanba">Seshanba</option>
+            <option value="Chorshanba">Chorshanba</option>
+            <option value="Payshanba">Payshanba</option>
+            <option value="Juma">Juma</option>
+            <option value="Shanba">Shanba</option>
+          </select>
+        </div>
+
+        <div class="form-row two">
+          <div>
+            <label>Boshlanish</label>
+            <input type="time" id="newTimeStart" required>
+          </div>
+          <div>
+            <label>Tugash</label>
+            <input type="time" id="newTimeEnd" required>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <label>Fan nomi</label>
+          <input type="text" id="newSubject" placeholder="Masalan: Matematika" required>
+        </div>
+
+        <div class="form-row">
+          <label>O'qituvchi</label>
+          <input type="text" id="newTeacher" placeholder="Masalan: Karimova N." required>
+        </div>
+
+        <div class="form-row two">
+          <div>
+            <label>Sinf</label>
+            <input type="text" id="newClass" placeholder="7-A" required>
+          </div>
+          <div>
+            <label>Xona</label>
+            <input type="text" id="newRoom" placeholder="204" required>
+          </div>
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" id="cancelBtn" class="btn-secondary">Bekor qilish</button>
+          <button type="submit" class="btn-primary">Saqlash</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>

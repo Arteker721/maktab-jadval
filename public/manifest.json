@@ -1,0 +1,32 @@
+{
+  "name": "Maktab Dars Jadvali",
+  "short_name": "Jadval",
+  "description": "O'quvchilar uchun zamonaviy dars jadvali",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#6366f1",
+  "theme_color": "#6366f1",
+  "lang": "uz",
+  "scope": "/",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Jadval",
+      "url": "/",
+      "description": "Dars jadvalini ko'rish"
+    },
+    {
+      "name": "Uy vazifasi",
+      "url": "/?tab=homework",
+      "description": "Uy vazifalarini ko'rish"
+    }
+  ]
+}

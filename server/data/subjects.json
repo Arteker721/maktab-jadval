@@ -1,0 +1,52 @@
+[
+  {
+    "id": "s-1",
+    "name": "Matematika",
+    "color": "#3b82f6"
+  },
+  {
+    "id": "s-2",
+    "name": "Fizika",
+    "color": "#10b981"
+  },
+  {
+    "id": "s-3",
+    "name": "Kimyo",
+    "color": "#f59e0b"
+  },
+  {
+    "id": "s-4",
+    "name": "Biologiya",
+    "color": "#22c55e"
+  },
+  {
+    "id": "s-5",
+    "name": "Ingliz tili",
+    "color": "#ef4444"
+  },
+  {
+    "id": "s-6",
+    "name": "Ona tili",
+    "color": "#8b5cf6"
+  },
+  {
+    "id": "s-7",
+    "name": "Tarix",
+    "color": "#a16207"
+  },
+  {
+    "id": "s-8",
+    "name": "Geografiya",
+    "color": "#06b6d4"
+  },
+  {
+    "id": "s-9",
+    "name": "Informatika",
+    "color": "#6366f1"
+  },
+  {
+    "id": "s-10",
+    "name": "Jismoniy tarbiya",
+    "color": "#ec4899"
+  }
+]

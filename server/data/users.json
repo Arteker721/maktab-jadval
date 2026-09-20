@@ -1,0 +1,32 @@
+[
+  {
+    "id": "u-admin",
+    "name": "Administrator",
+    "username": "admin",
+    "role": "admin",
+    "class": null,
+    "salt": "d4576d82453968259b197c51fe8098d9",
+    "hash": "15364aaeee899bcd24200753557c6f0718fcd370dfa79fbbd0e5af853b8978b1ff57fe914a8997c8a4cadd48bf65d93a638a296ebefa7ecb2e1da429a3e2ff18",
+    "createdAt": "2026-09-20T03:41:45.577Z"
+  },
+  {
+    "id": "u-teacher",
+    "name": "Karimova N.",
+    "username": "teacher",
+    "role": "teacher",
+    "class": null,
+    "salt": "2e42308c7267ef66109ab173074eb110",
+    "hash": "497cfd833c6a18fe0d278266369603d2181bebd8fb51cecf243798d371a726097c103250e79a5b876d7564efdb5bf78e58eb13060895892d8ea5c1432fe91b96",
+    "createdAt": "2026-09-20T03:41:45.578Z"
+  },
+  {
+    "id": "u-1789877237812",
+    "name": "Mahmudjon",
+    "username": "arteker1",
+    "role": "teacher",
+    "class": "7-A",
+    "salt": "50ac1ab1ff810e508523e3b7060f8257",
+    "hash": "f2a8ea5e6d9f3e6c914caf2c7872f88b73c75b5d670a7c9c5a4220aeb211a3d970ce2275dd0e34c5b191d9ed20956f60212f97a79d63823e1b3d19569c40c547",
+    "createdAt": "2026-09-20T04:07:17.813Z"
+  }
+]

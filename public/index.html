@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Maktab Jadvali</title>
+  
+  <link rel="stylesheet" href="style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+     <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#6366f1">
+  <link rel="icon" type="image/svg+xml" href="/icon.svg">
+  <link rel="apple-touch-icon" href="/icon.svg">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Jadval">
+</head>
+<body>
+
+  <!-- LOGIN SAHIFASI -->
+  <div id="loginScreen" class="login-screen">
+    <div class="login-box">
+      <div class="login-logo">📚</div>
+      <h1>Maktab Jadvali</h1>
+      <p>Tizimga kirish yoki ro'yxatdan o'tish</p>
+
+      <div class="login-tabs">
+        <button class="login-tab active" data-tab="login">Kirish</button>
+        <button class="login-tab" data-tab="register">Ro'yxatdan o'tish</button>
+      </div>
+
+      <!-- Kirish formasi -->
+      <form id="loginForm" class="login-form">
+        <input type="text" id="loginUsername" placeholder="Username" required autocomplete="username">
+        <input type="password" id="loginPassword" placeholder="Parol" required autocomplete="current-password">
+        <button type="submit">Kirish →</button>
+      </form>
+
+      <!-- Ro'yxatdan o'tish formasi -->
+      <form id="registerForm" class="login-form hidden">
+        <input type="text" id="regName" placeholder="To'liq ism" required>
+        <input type="text" id="regUsername" placeholder="Username" required autocomplete="username">
+        <input type="password" id="regPassword" placeholder="Parol (kamida 4 belgi)" required minlength="4">
+        <select id="regRole">
+          <option value="student">O'quvchi</option>
+          <option value="teacher">O'qituvchi</option>
+        </select>
+        <input type="text" id="regClass" placeholder="Sinf (masalan: 7-A)">
+        <button type="submit">Ro'yxatdan o'tish →</button>
+      </form>
+
+      <div class="login-hint">
+        <small>Demo: <b>admin</b> / <b>admin123</b></small>
+      </div>
+    </div>
+  </div>
+
+  <!-- ASOSIY SAYT -->
+  <div id="app" class="app hidden">
+    <header class="header">
+      <div class="header-left">
+        <div class="logo">📚</div>
+        <div>
+          <h1>Maktab Jadvali</h1>
+          <p id="userInfo">—</p>
+        </div>
+      </div>
+      <div class="header-right">
+        <button id="darkModeBtn" class="icon-btn" title="Tungi rejim">🌙</button>
+        <button id="logoutBtn" class="logout-btn">Chiqish</button>
+      </div>
+    </header>
+
+    <nav class="tabs">
+      <button class="tab active" data-view="schedule">📅 Jadval</button>
+      <button class="tab" data-view="homework">📝 Uy vazifasi</button>
+      <button class="tab" data-view="notes">📌 Izohlar</button>
+      <button class="tab" data-view="announcements">📢 E'lonlar</button>
+      <button class="tab" data-view="admin">⚙️ Admin</button>
+    </nav>
+
+    <!-- JADVAL -->
+    <section id="view-schedule" class="view">
+      <div class="controls">
+        <input type="text" id="searchInput" placeholder="🔍 Fan yoki o'qituvchi...">
+        <select id="dayFilter">
+          <option value="all">Barcha kunlar</option>
+          <option value="Dushanba">Dushanba</option>
+          <option value="Seshanba">Seshanba</option>
+          <option value="Chorshanba">Chorshanba</option>
+          <option value="Payshanba">Payshanba</option>
+          <option value="Juma">Juma</option>
+          <option value="Shanba">Shanba</option>
+        </select>
+        <button id="addLessonBtn" class="add-btn hidden">➕ Dars qo'shish</button>
+      </div>
+      <div class="table-section">
+        <table id="scheduleTable">
+          <thead>
+            <tr>
+              <th>Vaqt</th>
+              <th>Dushanba</th>
+              <th>Seshanba</th>
+              <th>Chorshanba</th>
+              <th>Payshanba</th>
+              <th>Juma</th>
+              <th>Shanba</th>
+            </tr>
+          </thead>
+          <tbody id="scheduleBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- UY VAZIFASI -->
+    <section id="view-homework" class="view hidden">
+      <h2>📝 Uy vazifalari</h2>
+      <div id="homeworkList" class="list-container"></div>
+      <button id="addHwBtn" class="add-btn hidden" style="margin-top:20px;">➕ Vazifa qo'shish</button>
+    </section>
+
+    <!-- IZOHLAR -->
+    <section id="view-notes" class="view hidden">
+      <h2>📌 Shaxsiy izohlar</h2>
+      <form id="noteForm" class="inline-form">
+        <input type="text" id="noteInput" placeholder="Yangi izoh yozing..." required>
+        <button type="submit">Qo'shish</button>
+      </form>
+      <div id="notesList" class="list-container"></div>
+    </section>
+
+    <!-- E'LONLAR -->
+    <section id="view-announcements" class="view hidden">
+      <h2>📢 E'lonlar</h2>
+      <div id="announcementsList" class="list-container"></div>
+      <button id="addAnnBtn" class="add-btn hidden" style="margin-top:20px;">➕ E'lon qo'shish</button>
+    </section>
+
+    <!-- ADMIN -->
+    <section id="view-admin" class="view hidden">
+      <h2>⚙️ Admin Panel</h2>
+      <div class="admin-grid">
+        <div class="admin-card">
+          <h3>👥 Foydalanuvchilar</h3>
+          <div id="usersList"></div>
+        </div>
+        <div class="admin-card">
+          <h3>📚 Fanlar</h3>
+          <div id="subjectsList"></div>
+          <button id="addSubjectBtn" class="small-btn">➕ Fan qo'shish</button>
+        </div>
+        <div class="admin-card">
+          <h3>📤 Import / Eksport</h3>
+          <button id="exportBtn" class="small-btn">📥 Eksport (JSON)</button>
+          <button id="importBtn" class="small-btn">📤 Import (JSON)</button>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- MODAL -->
+  <div id="modal" class="modal hidden">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 id="modalTitle">Qo'shish</h2>
+        <button id="closeModal" class="close-btn">✕</button>
+      </div>
+      <form id="modalForm"></form>
+    </div>
+  </div>
+
+  <!-- TOAST -->
+  <div id="toast" class="toast hidden"></div>
+
+  <script src="script.js"></script>
+</body>
+</html>

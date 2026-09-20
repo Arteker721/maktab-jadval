@@ -1,0 +1,12 @@
+{
+  "name": "maktab-jadval",
+  "version": "1.0.0",
+  "description": "Maktab dars jadvali sayti",
+  "main": "server/server.js",
+  "scripts": {
+    "start": "node server/server.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2"
+  }
+}
