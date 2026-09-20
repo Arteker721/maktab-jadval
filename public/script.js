@@ -572,3 +572,151 @@ window.addEventListener('appinstalled', () => {
   if (btn) btn.remove();
   toast('📲 Ilova muvaffaqiyatli o\'rnatildi!');
 });
+// ============ QURILMANI ANIQLASH ============
+function detectDevice() {
+  const width = window.innerWidth;
+  const height = window.innerHeight;
+  const ua = navigator.userAgent;
+  
+  // Qurilma turi
+  let deviceType = 'desktop';
+  let deviceIcon = '💻';
+  let deviceName = 'Kompyuter';
+  
+  // Telefon aniqlash
+  const isPhone = /iPhone|iPod|Android.*Mobile|Windows Phone|BlackBerry/i.test(ua);
+  const isTablet = /iPad|Android(?!.*Mobile)|Tablet|PlayBook|Silk/i.test(ua);
+  const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+  
+  // Kenglik bo'yicha
+  if (isPhone || (width <= 480 && isTouchDevice)) {
+    deviceType = 'phone';
+    deviceIcon = '📱';
+    deviceName = 'Telefon';
+  } else if (isTablet || (width <= 768 && isTouchDevice)) {
+    deviceType = 'tablet';
+    deviceIcon = '📱';
+    deviceName = 'Planshet';
+  } else {
+    deviceType = 'desktop';
+    deviceIcon = '💻';
+    deviceName = 'Kompyuter';
+  }
+  
+  // Orientatsiya
+  const orientation = width > height ? 'gorizontal' : 'vertikal';
+  
+  return {
+    type: deviceType,
+    icon: deviceIcon,
+    name: deviceName,
+    width,
+    height,
+    orientation,
+    isTouch: isTouchDevice,
+    pixelRatio: window.devicePixelRatio || 1,
+    online: navigator.onLine
+  };
+}
+
+// ============ QURILMA INDICATOR (ko'rsatkichi) ============
+function showDeviceIndicator() {
+  // Agar allaqachon mavjud bo'lsa — o'chirish
+  const existing = document.getElementById('deviceIndicator');
+  if (existing) existing.remove();
+  
+  const device = detectDevice();
+  
+  // Faqat mobil qurilmalarda ko'rsatamiz
+  const indicator = document.createElement('div');
+  indicator.id = 'deviceIndicator';
+  indicator.style.cssText = `
+    position: fixed;
+    top: 10px;
+    right: 10px;
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    color: white;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    z-index: 9998;
+    font-family: 'Inter', sans-serif;
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    opacity: 0.85;
+    transition: opacity 0.3s;
+    cursor: pointer;
+  `;
+  
+  indicator.innerHTML = `
+    <span style="font-size: 1rem;">${device.icon}</span>
+    <span>${device.name}</span>
+    <span style="opacity: 0.7; font-size: 0.65rem;">${device.width}×${device.height}</span>
+  `;
+  
+  // Bosilganda batafsil ma'lumot
+  indicator.onclick = () => {
+    alert(
+      `📱 Qurilma ma'lumotlari:\n\n` +
+      `Turi: ${device.name}\n` +
+      `Ekran: ${device.width} × ${device.height}px\n` +
+      `Orientatsiya: ${device.orientation}\n` +
+      `Touch: ${device.isTouch ? 'Ha' : "Yo'q"}\n` +
+      `Pixel Ratio: ${device.pixelRatio}x\n` +
+      `Internet: ${device.online ? 'Bor ✅' : "Yo'q ❌"}`
+    );
+  };
+  
+  // 3 soniyadan keyin xira qilish
+  document.body.appendChild(indicator);
+  setTimeout(() => {
+    indicator.style.opacity = '0.4';
+  }, 3000);
+  
+  // Hover bilan yana ko'rinadigan qilish
+  indicator.onmouseenter = () => indicator.style.opacity = '1';
+  indicator.onmouseleave = () => indicator.style.opacity = '0.4';
+}
+
+// ============ EKRAN O'ZGARGANDA ============
+let resizeTimer;
+window.addEventListener('resize', () => {
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(() => {
+    // Qurilma o'zgarganini tekshirish
+    const device = detectDevice();
+    const indicator = document.getElementById('deviceIndicator');
+    if (indicator) {
+      indicator.innerHTML = `
+        <span style="font-size: 1rem;">${device.icon}</span>
+        <span>${device.name}</span>
+        <span style="opacity: 0.7; font-size: 0.65rem;">${device.width}×${device.height}</span>
+      `;
+    }
+    
+    // Jadvalni qayta chizish (agar kerak bo'lsa)
+    if (typeof renderSchedule === 'function' && currentUser) {
+      // Faqat kerak bo'lganda
+    }
+  }, 300);
+});
+
+// ============ INTERNET HOLATI ============
+window.addEventListener('online', () => {
+  console.log('✅ Internet qaytdi');
+  if (typeof toast === 'function') toast('✅ Internet qaytdi');
+});
+
+window.addEventListener('offline', () => {
+  console.log('❌ Internet yo\'q');
+  if (typeof toast === 'function') toast('❌ Internet yo\'q — offline rejim', 'error');
+});
+
+// ============ ISHGA TUSHIRISH ============
+// Login sahifasida ham ko'rsatamiz
+document.addEventListener('DOMContentLoaded', () => {
+  showDeviceIndicator();
+});
