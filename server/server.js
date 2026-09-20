@@ -407,45 +407,25 @@ app.use((err, req, res, next) => {
 });
 
 // ============ START ============
-// ⚡ SERVERNI DARHOL ISHGA TUSHIRAMIZ
-// MongoDB keyinroq ulansa ham, server ishlayveradi
+// 1. SERVERNI DARHOL ISHGA TUSHIRAMIZ (MongoDB ni KUTMASDAN!)
 app.listen(PORT, () => {
   console.log('');
   console.log('╔════════════════════════════════════════╗');
   console.log('║   ✅ SERVER ISHGA TUSHDI               ║');
-  console.log('╠════════════════════════════════════════╣');
-  console.log(`║   🌐 Port: ${PORT}                        ║`);
-  console.log('╠════════════════════════════════════════╣');
-  console.log('║   👤 Admin:   admin / admin123         ║');
-  console.log('║   👨‍🏫 Teacher: teacher / teacher123     ║');
+  console.log(`║   🌐 Port: ${PORT}                       ║`);
   console.log('╚════════════════════════════════════════╝');
   console.log('');
 });
 
-// 📦 MongoDB'ga ulanish (orqa fonda)
-async function connectMongoDB() {
-  try {
-    await mongoose.connect(MONGO_URI, {
-      serverSelectionTimeoutMS: 120000,
-      connectTimeoutMS: 120000,
-      socketTimeoutMS: 120000,
-      family: 4,
-      bufferCommands: true,
-      bufferTimeoutMS: 120000,
-      maxPoolSize: 5,
-      minPoolSize: 1
-    });
-    console.log('✅ MongoDB Atlas\'ga ulandi');
+// 2. MongoDB'ga ulanish (orqa fonda)
+mongoose.connect(MONGO_URI, {
+  serverSelectionTimeoutMS: 60000,
+  connectTimeoutMS: 60000,
+  socketTimeoutMS: 60000,
+  family: 4,
+  bufferCommands: false,
+})
+.then(() => console.log('✅ MongoDB Atlas\'ga ulandi'))
+.catch(err => console.error('❌ MongoDB xatosi:', err.message));
 
-    // initData ni ishga tushiramiz
-    console.log('📦 Ma\'lumotlar bazasi tekshirilmoqda...');
-    await initData();
-    console.log('✅ Ma\'lumotlar bazasi tayyor!');
-  } catch (err) {
-    console.error('❌ MongoDB xatosi:', err.message);
-    console.error('⚠️ Server ishlashda davom etadi, lekin ma\'lumotlar saqlanmaydi');
-    // ⚠️ process.exit YO'Q! Server ishlashda davom etadi
-  }
-}
-
-connectMongoDB();
+// 3. initData OLIB TASHLANDI — kerak emas!
