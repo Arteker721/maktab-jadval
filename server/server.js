@@ -19,10 +19,10 @@ if (!MONGO_URI) {
 }
 
 mongoose.connect(MONGO_URI, {
-  serverSelectionTimeoutMS: 120000,  // 60 soniya
-  connectTimeoutMS: 120000,           // 60 soniya
-  socketTimeoutMS: 120000,            // 60 soniya
-  family: 4                          // IPv4 ishlatish
+  serverSelectionTimeoutMS: 60000,
+  connectTimeoutMS: 60000,
+  socketTimeoutMS: 60000,
+  family: 4
 })
 
 // ============ PASSWORD ============
@@ -40,52 +40,69 @@ function verifyPassword(password, salt, hash) {
 function generateToken() { return crypto.randomBytes(32).toString('hex'); }
 
 // ============ INITIAL DATA ============
-async function initData() {
-  const userCount = await User.countDocuments();
-  if (userCount === 0) {
-    const adminPass = hashPassword('admin123');
-    const teacherPass = hashPassword('teacher123');
-    await User.create([
-      { name: 'Administrator', username: 'admin', role: 'admin', class: null, ...adminPass },
-      { name: 'Karimova N.', username: 'teacher', role: 'teacher', class: null, ...teacherPass },
-    ]);
-    console.log('👤 Admin va Teacher yaratildi');
-  }
+async function initData(retries = 3) {
+  for (let i = 0; i < retries; i++) {
+    try {
+      console.log(`📦 Ma'lumotlarni tekshirish... (urinish ${i + 1}/${retries})`);
 
-  const subjectCount = await Subject.countDocuments();
-  if (subjectCount === 0) {
-    await Subject.create([
-      { name: 'Matematika', color: '#3b82f6' },
-      { name: 'Fizika', color: '#10b981' },
-      { name: 'Kimyo', color: '#f59e0b' },
-      { name: 'Biologiya', color: '#22c55e' },
-      { name: 'Ingliz tili', color: '#ef4444' },
-      { name: 'Ona tili', color: '#8b5cf6' },
-      { name: 'Tarix', color: '#a16207' },
-      { name: 'Geografiya', color: '#06b6d4' },
-      { name: 'Informatika', color: '#6366f1' },
-      { name: 'Jismoniy tarbiya', color: '#ec4899' },
-    ]);
-    console.log('📚 Fanlar yaratildi');
-  }
+      const userCount = await User.countDocuments();
+      if (userCount === 0) {
+        const adminPass = hashPassword('admin123');
+        const teacherPass = hashPassword('teacher123');
+        await User.create([
+          { name: 'Administrator', username: 'admin', role: 'admin', class: null, ...adminPass },
+          { name: 'Karimova N.', username: 'teacher', role: 'teacher', class: null, ...teacherPass },
+        ]);
+        console.log('👤 Admin va Teacher yaratildi');
+      }
 
-  const lessonCount = await Lesson.countDocuments();
-  if (lessonCount === 0) {
-    await Lesson.create([
-      { day: 'Dushanba', start: '08:00', end: '08:45', subject: 'Matematika', teacher: 'Karimova N.', class: '7-A', room: '204' },
-      { day: 'Dushanba', start: '09:00', end: '09:45', subject: 'Ingliz tili', teacher: 'Aliyev S.', class: '7-A', room: '105' },
-      { day: 'Dushanba', start: '10:00', end: '10:45', subject: 'Fizika', teacher: 'Rahimov B.', class: '7-A', room: '301' },
-      { day: 'Seshanba', start: '08:00', end: '08:45', subject: 'Kimyo', teacher: 'Yusupova D.', class: '7-A', room: '202' },
-      { day: 'Seshanba', start: '09:00', end: '09:45', subject: 'Matematika', teacher: 'Karimova N.', class: '7-A', room: '204' },
-      { day: 'Chorshanba', start: '08:00', end: '08:45', subject: 'Biologiya', teacher: 'Nazarova G.', class: '7-A', room: '203' },
-      { day: 'Chorshanba', start: '09:00', end: '09:45', subject: 'Informatika', teacher: 'Qodirov J.', class: '7-A', room: '401' },
-      { day: 'Payshanba', start: '08:00', end: '08:45', subject: 'Geografiya', teacher: 'Islomov T.', class: '7-A', room: '107' },
-      { day: 'Payshanba', start: '09:00', end: '09:45', subject: 'Fizika', teacher: 'Rahimov B.', class: '7-A', room: '301' },
-      { day: 'Juma', start: '08:00', end: '08:45', subject: 'Matematika', teacher: 'Karimova N.', class: '7-A', room: '204' },
-      { day: 'Juma', start: '09:00', end: '09:45', subject: 'Jismoniy tarbiya', teacher: 'Azimov K.', class: '7-A', room: 'Sport zali' },
-    ]);
-    console.log('📅 Boshlang\'ich darslar yaratildi');
+      const subjectCount = await Subject.countDocuments();
+      if (subjectCount === 0) {
+        await Subject.create([
+          { name: 'Matematika', color: '#3b82f6' },
+          { name: 'Fizika', color: '#10b981' },
+          { name: 'Kimyo', color: '#f59e0b' },
+          { name: 'Biologiya', color: '#22c55e' },
+          { name: 'Ingliz tili', color: '#ef4444' },
+          { name: 'Ona tili', color: '#8b5cf6' },
+          { name: 'Tarix', color: '#a16207' },
+          { name: 'Geografiya', color: '#06b6d4' },
+          { name: 'Informatika', color: '#6366f1' },
+          { name: 'Jismoniy tarbiya', color: '#ec4899' },
+        ]);
+        console.log('📚 Fanlar yaratildi');
+      }
+
+      const lessonCount = await Lesson.countDocuments();
+      if (lessonCount === 0) {
+        await Lesson.create([
+          { day: 'Dushanba', start: '08:00', end: '08:45', subject: 'Matematika', teacher: 'Karimova N.', class: '7-A', room: '204' },
+          { day: 'Dushanba', start: '09:00', end: '09:45', subject: 'Ingliz tili', teacher: 'Aliyev S.', class: '7-A', room: '105' },
+          { day: 'Dushanba', start: '10:00', end: '10:45', subject: 'Fizika', teacher: 'Rahimov B.', class: '7-A', room: '301' },
+          { day: 'Seshanba', start: '08:00', end: '08:45', subject: 'Kimyo', teacher: 'Yusupova D.', class: '7-A', room: '202' },
+          { day: 'Seshanba', start: '09:00', end: '09:45', subject: 'Matematika', teacher: 'Karimova N.', class: '7-A', room: '204' },
+          { day: 'Chorshanba', start: '08:00', end: '08:45', subject: 'Biologiya', teacher: 'Nazarova G.', class: '7-A', room: '203' },
+          { day: 'Chorshanba', start: '09:00', end: '09:45', subject: 'Informatika', teacher: 'Qodirov J.', class: '7-A', room: '401' },
+          { day: 'Payshanba', start: '08:00', end: '08:45', subject: 'Geografiya', teacher: 'Islomov T.', class: '7-A', room: '107' },
+          { day: 'Payshanba', start: '09:00', end: '09:45', subject: 'Fizika', teacher: 'Rahimov B.', class: '7-A', room: '301' },
+          { day: 'Juma', start: '08:00', end: '08:45', subject: 'Matematika', teacher: 'Karimova N.', class: '7-A', room: '204' },
+          { day: 'Juma', start: '09:00', end: '09:45', subject: 'Jismoniy tarbiya', teacher: 'Azimov K.', class: '7-A', room: 'Sport zali' },
+        ]);
+        console.log('📅 Boshlang\'ich darslar yaratildi');
+      }
+
+      console.log('✅ initData muvaffaqiyatli tugadi!');
+      return; // Muvaffaqiyatli — chiqamiz
+
+    } catch (err) {
+      console.error(`❌ initData xatosi (urinish ${i + 1}/${retries}):`, err.message);
+      if (i < retries - 1) {
+        console.log('⏳ 15 soniya kutamiz va qayta urinamiz...');
+        await new Promise(r => setTimeout(r, 15000));
+      }
+    }
   }
+  console.error('❌ initData 3 marta urinib ham muvaffaqiyatsiz bo\'ldi');
 }
 
 // ============ MIDDLEWARE ============
@@ -388,7 +405,7 @@ async function startServer() {
     console.log('✅ MongoDB Atlas\'ga ulandi');
 
     // 2. Muhim: MongoDB to'liq tayyor bo'lishi uchun 3 soniya kutamiz
-    await new Promise(resolve => setTimeout(resolve, 3000));
+    await new Promise(resolve => setTimeout(resolve, 10000));
 
     // 3. Boshlang'ich ma'lumotlarni yozish
     await initData();
