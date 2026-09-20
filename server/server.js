@@ -407,43 +407,45 @@ app.use((err, req, res, next) => {
 });
 
 // ============ START ============
-mongoose.connect(MONGO_URI, {
-  serverSelectionTimeoutMS: 120000,
-  connectTimeoutMS: 120000,
-  socketTimeoutMS: 120000,
-  family: 4,
-  bufferCommands: true,
-  bufferTimeoutMS: 120000,
-  maxPoolSize: 5,
-  minPoolSize: 1
-})
-.then(() => {
-  console.log('✅ MongoDB Atlas\'ga ulandi');
-
-  // ⚡ MUHIM: Serverni DARHOL ishga tushiramiz!
-  app.listen(PORT, () => {
-    console.log('');
-    console.log('╔════════════════════════════════════════╗');
-    console.log('║   ✅ SERVER ISHGA TUSHDI               ║');
-    console.log('╠════════════════════════════════════════╣');
-    console.log(`║   🌐 http://localhost:${PORT}             ║`);
-    console.log('╠════════════════════════════════════════╣');
-    console.log('║   👤 Admin:   admin / admin123         ║');
-    console.log('║   👨‍🏫 Teacher: teacher / teacher123     ║');
-    console.log('╚════════════════════════════════════════╝');
-    console.log('');
-  });
-
-  // 📦 initData ni ORQA FONDA ishga tushiramiz
-  // Server allaqachon ishlayapti, shuning uchun Render "No open ports" demaydi
-  console.log('📦 Ma\'lumotlar bazasi tekshirilmoqda (orqa fonda)...');
-  
-  initData()
-    .then(() => console.log('✅ Ma\'lumotlar bazasi tayyor!'))
-    .catch(err => console.error('⚠️ initData xatosi:', err.message));
-
-})
-.catch(err => {
-  console.error('❌ MongoDB xatosi:', err.message);
-  process.exit(1);
+// ⚡ SERVERNI DARHOL ISHGA TUSHIRAMIZ
+// MongoDB keyinroq ulansa ham, server ishlayveradi
+app.listen(PORT, () => {
+  console.log('');
+  console.log('╔════════════════════════════════════════╗');
+  console.log('║   ✅ SERVER ISHGA TUSHDI               ║');
+  console.log('╠════════════════════════════════════════╣');
+  console.log(`║   🌐 Port: ${PORT}                        ║`);
+  console.log('╠════════════════════════════════════════╣');
+  console.log('║   👤 Admin:   admin / admin123         ║');
+  console.log('║   👨‍🏫 Teacher: teacher / teacher123     ║');
+  console.log('╚════════════════════════════════════════╝');
+  console.log('');
 });
+
+// 📦 MongoDB'ga ulanish (orqa fonda)
+async function connectMongoDB() {
+  try {
+    await mongoose.connect(MONGO_URI, {
+      serverSelectionTimeoutMS: 120000,
+      connectTimeoutMS: 120000,
+      socketTimeoutMS: 120000,
+      family: 4,
+      bufferCommands: true,
+      bufferTimeoutMS: 120000,
+      maxPoolSize: 5,
+      minPoolSize: 1
+    });
+    console.log('✅ MongoDB Atlas\'ga ulandi');
+
+    // initData ni ishga tushiramiz
+    console.log('📦 Ma\'lumotlar bazasi tekshirilmoqda...');
+    await initData();
+    console.log('✅ Ma\'lumotlar bazasi tayyor!');
+  } catch (err) {
+    console.error('❌ MongoDB xatosi:', err.message);
+    console.error('⚠️ Server ishlashda davom etadi, lekin ma\'lumotlar saqlanmaydi');
+    // ⚠️ process.exit YO'Q! Server ishlashda davom etadi
+  }
+}
+
+connectMongoDB();
