@@ -3,6 +3,10 @@ const path = require('path');
 const crypto = require('crypto');
 const mongoose = require('mongoose');
 
+// 👇 BU 3 QATORNI QO'SHING
+const dns = require('dns');
+dns.setServers(['8.8.8.8', '8.8.4.4', '1.1.1.1', '1.0.0.1']);
+
 const {
   User, Lesson, Subject, Homework, Note, Favorite, Announcement, Token
 } = require('./models');
