@@ -6,6 +6,9 @@ const mongoose = require('mongoose');
 // 👇 BU 3 QATORNI QO'SHING
 const dns = require('dns');
 dns.setServers(['8.8.8.8', '8.8.4.4', '1.1.1.1', '1.0.0.1']);
+// Mongoose so'rovlarini uzoqroq kutish
+mongoose.set('bufferCommands', true);
+mongoose.set('bufferTimeoutMS', 120000); // 2 daqiqa
 
 const {
   User, Lesson, Subject, Homework, Note, Favorite, Announcement, Token
@@ -23,10 +26,14 @@ if (!MONGO_URI) {
 }
 
 mongoose.connect(MONGO_URI, {
-  serverSelectionTimeoutMS: 60000,
-  connectTimeoutMS: 60000,
-  socketTimeoutMS: 60000,
-  family: 4
+  serverSelectionTimeoutMS: 120000,  // 2 daqiqa
+  connectTimeoutMS: 120000,           // 2 daqiqa
+  socketTimeoutMS: 120000,            // 2 daqiqa
+  family: 4,
+  bufferCommands: true,
+  bufferTimeoutMS: 120000,            // 2 daqiqa
+  maxPoolSize: 5,                     // Ulanishlar soni
+  minPoolSize: 1
 })
 
 // ============ PASSWORD ============
@@ -408,8 +415,8 @@ async function startServer() {
     });
     console.log('✅ MongoDB Atlas\'ga ulandi');
 
-    // 2. Muhim: MongoDB to'liq tayyor bo'lishi uchun 3 soniya kutamiz
-    await new Promise(resolve => setTimeout(resolve, 10000));
+    // 2. Muhim: MongoDB to'liq tayyor bo'lishi uchun 20 soniya kutamiz
+    await new Promise(resolve => setTimeout(resolve, 20000));
 
     // 3. Boshlang'ich ma'lumotlarni yozish
     await initData();
