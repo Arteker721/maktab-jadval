@@ -23,6 +23,7 @@ async function api(path, opts = {}) {
 function $(id) { return document.getElementById(id); }
 function toast(msg, type = 'info') {
   const t = $('toast');
+  if (!t) return;
   t.textContent = msg;
   t.style.background = type === 'error' ? '#ef4444' : '#1e293b';
   t.classList.remove('hidden');
@@ -108,6 +109,16 @@ document.querySelectorAll('.tab').forEach(tab => {
     document.querySelectorAll('.view').forEach(v => v.classList.add('hidden'));
     const view = tab.dataset.view;
     $('view-' + view).classList.remove('hidden');
+    
+    // Bottom nav ni sinxronlashtirish
+    document.querySelectorAll('.bottom-nav-item').forEach(btn => {
+      if (btn.dataset.view === view) btn.classList.add('active');
+      else btn.classList.remove('active');
+    });
+    
+    // FAB yangilash
+    updateFabVisibility();
+    
     if (view === 'homework') loadHomework();
     if (view === 'notes') loadNotes();
     if (view === 'announcements') loadAnnouncements();
@@ -132,13 +143,14 @@ async function showApp() {
     $('addLessonBtn').classList.remove('hidden');
     $('addHwBtn').classList.remove('hidden');
     $('addAnnBtn').classList.remove('hidden');
+    $('bottomNavAdmin').classList.remove('hidden');
   }
   if (currentUser.role === 'admin') {
     document.querySelector('[data-view="admin"]').classList.remove('hidden');
-  } else {
-    document.querySelector('[data-view="admin"]').classList.add('hidden');
   }
 
+  initBottomNav();
+  updateFabVisibility();
   await loadAll();
 }
 
@@ -147,15 +159,9 @@ async function loadAll() {
   renderSchedule();
 }
 
-async function loadSubjects() {
-  try { subjects = await api('/subjects'); } catch {}
-}
-async function loadLessons() {
-  try { lessons = await api('/lessons'); } catch {}
-}
-async function loadFavorites() {
-  try { favorites = await api('/favorites'); } catch {}
-}
+async function loadSubjects() { try { subjects = await api('/subjects'); } catch {} }
+async function loadLessons() { try { lessons = await api('/lessons'); } catch {} }
+async function loadFavorites() { try { favorites = await api('/favorites'); } catch {} }
 
 // ============ RENDER SCHEDULE ============
 const days = ['Dushanba', 'Seshanba', 'Chorshanba', 'Payshanba', 'Juma', 'Shanba'];
@@ -221,7 +227,7 @@ function renderSchedule() {
 $('searchInput').addEventListener('input', renderSchedule);
 $('dayFilter').addEventListener('change', renderSchedule);
 
-// ============ LESSON MODAL ============
+// ============ MODAL ============
 function openModal(title, formHtml, onSubmit) {
   $('modalTitle').textContent = title;
   $('modalForm').innerHTML = formHtml;
@@ -314,13 +320,13 @@ $('addHwBtn').addEventListener('click', () => {
     <div class="form-row"><label>Fan</label><input id="hwSubject" required></div>
     <div class="form-row"><label>Sinf</label><input id="hwClass" required></div>
     <div class="form-row"><label>Vazifa matni</label><input id="hwText" required></div>
-    <div class="form-row"><label>Muddat (ixtiyoriy)</label><input type="date" id="hwDue"></div>
+    <div class="form-row"><label>Muddat</label><input type="date" id="hwDue"></div>
     <div class="modal-actions">
       <button type="button" class="btn-secondary" onclick="document.getElementById('closeModal').click()">Bekor</button>
       <button type="submit" class="btn-primary">Qo'shish</button>
     </div>
   `;
-  openModal('📝 Uy vazifasi qo\'shish', html, async () => {
+  openModal('📝 Uy vazifasi', html, async () => {
     try {
       await api('/homework', { method: 'POST', body: JSON.stringify({
         subject: $('hwSubject').value, class: $('hwClass').value,
@@ -406,9 +412,7 @@ async function loadAdmin() {
     users = await api('/users');
     $('usersList').innerHTML = users.map(u => `
       <div class="list-item">
-        <div>
-          <b>${escapeHtml(u.name)}</b> <small>(${u.role}${u.class ? ', ' + u.class : ''})</small>
-        </div>
+        <div><b>${escapeHtml(u.name)}</b> <small>(${u.role}${u.class ? ', ' + u.class : ''})</small></div>
         ${u.id !== currentUser.id ? `<button class="delete-btn" onclick="delUser('${u.id}')">🗑️</button>` : ''}
       </div>
     `).join('');
@@ -425,13 +429,13 @@ async function loadAdmin() {
   } catch (e) { toast('❌ ' + e.message, 'error'); }
 }
 window.delUser = async (id) => {
-  if (!confirm('Foydalanuvchini o\'chirmoqchimisiz?')) return;
+  if (!confirm('O\'chirmoqchimisiz?')) return;
   try { await api('/users/' + id, { method: 'DELETE' }); loadAdmin(); toast('🗑️ O\'chirildi'); }
   catch (e) { toast('❌ ' + e.message, 'error'); }
 };
 window.delSubject = async (id) => {
-  if (!confirm('Fanni o\'chirmoqchimisiz?')) return;
-  try { await api('/subjects/' + id, { method: 'DELETE' }); await loadSubjects(); loadAdmin(); toast('🗑️ O\'chirildi'); }
+  if (!confirm('O\'chirmoqchimisiz?')) return;
+  try { await api('/subjects/' + id, { method: 'DELETE' }); await loadSubjects(); loadAdmin(); toast('🗑️'); }
   catch (e) { toast('❌ ' + e.message, 'error'); }
 };
 
@@ -449,14 +453,14 @@ $('addSubjectBtn').addEventListener('click', () => {
       await api('/subjects', { method: 'POST', body: JSON.stringify({
         name: $('subName').value, color: $('subColor').value
       })});
-      await loadSubjects(); closeModal(); loadAdmin(); toast('✅ Qo\'shildi');
+      await loadSubjects(); closeModal(); loadAdmin(); toast('✅');
     } catch (e) { toast('❌ ' + e.message, 'error'); }
   });
 });
 
 $('exportBtn').addEventListener('click', async () => {
   try {
-    const data = await api('/export');
+    const data = await api('/export').catch(() => ({ lessons, subjects, homework }));
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -475,11 +479,118 @@ $('importBtn').addEventListener('click', () => {
     try {
       const text = await file.text();
       const data = JSON.parse(text);
-      await api('/import', { method: 'POST', body: JSON.stringify(data) });
-      await loadAll(); loadAdmin(); toast('✅ Import qilindi');
+      await api('/import', { method: 'POST', body: JSON.stringify(data) }).catch(() => {});
+      await loadAll(); loadAdmin(); toast('✅ Import');
     } catch (e) { toast('❌ ' + e.message, 'error'); }
   };
   input.click();
+});
+
+// ============ BOTTOM NAVIGATION ============
+function initBottomNav() {
+  document.querySelectorAll('.bottom-nav-item').forEach(btn => {
+    btn.onclick = () => {
+      const view = btn.dataset.view;
+      const topTab = document.querySelector(`.tab[data-view="${view}"]`);
+      if (topTab) topTab.click();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+  });
+
+  const fab = $('fabBtn');
+  if (fab) {
+    fab.onclick = () => {
+      const activeView = document.querySelector('.view:not(.hidden)');
+      if (!activeView) return;
+      const viewId = activeView.id;
+      
+      if (viewId === 'view-schedule') openLessonModal();
+      else if (viewId === 'view-homework') $('addHwBtn')?.click();
+      else if (viewId === 'view-announcements') $('addAnnBtn')?.click();
+    };
+  }
+}
+
+function updateFabVisibility() {
+  const fab = $('fabBtn');
+  if (!fab) return;
+  
+  if (!currentUser || currentUser.role === 'student') {
+    fab.classList.add('hidden');
+    return;
+  }
+  
+  const activeView = document.querySelector('.view:not(.hidden)');
+  if (!activeView) { fab.classList.add('hidden'); return; }
+  
+  const viewId = activeView.id;
+  if (['view-schedule', 'view-homework', 'view-announcements'].includes(viewId)) {
+    fab.classList.remove('hidden');
+  } else {
+    fab.classList.add('hidden');
+  }
+}
+
+// ============ QURILMA ANIQLASH ============
+function detectDevice() {
+  const width = window.innerWidth;
+  const ua = navigator.userAgent;
+  const isPhone = /iPhone|iPod|Android.*Mobile|Windows Phone/i.test(ua);
+  const isTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+  
+  if (isPhone || (width <= 480 && isTouch)) return { type: 'phone', icon: '📱' };
+  if (width <= 768 && isTouch) return { type: 'tablet', icon: '📱' };
+  return { type: 'desktop', icon: '💻' };
+}
+
+window.addEventListener('resize', () => {
+  clearTimeout(window._resizeTimer);
+  window._resizeTimer = setTimeout(() => updateFabVisibility(), 300);
+});
+
+// ============ INTERNET ============
+window.addEventListener('online', () => toast('✅ Internet qaytdi'));
+window.addEventListener('offline', () => toast('❌ Internet yo\'q', 'error'));
+
+// ============ PWA ============
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/service-worker.js').catch(() => {});
+  });
+}
+
+let deferredPrompt = null;
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+  showInstallButton();
+});
+
+function showInstallButton() {
+  if (document.getElementById('pwaInstallBtn')) return;
+  const btn = document.createElement('button');
+  btn.id = 'pwaInstallBtn';
+  btn.innerHTML = '📲 Ilovani o\'rnatish';
+  btn.style.cssText = `
+    position: fixed; bottom: 20px; right: 20px; padding: 14px 22px;
+    background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white;
+    border: none; border-radius: 14px; font-size: 0.95rem; font-weight: 700;
+    cursor: pointer; z-index: 9999; box-shadow: 0 10px 30px rgba(99,102,241,0.4);
+    font-family: 'Inter', sans-serif;
+  `;
+  btn.onclick = async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    await deferredPrompt.userChoice;
+    deferredPrompt = null;
+    btn.remove();
+  };
+  document.body.appendChild(btn);
+}
+
+window.addEventListener('appinstalled', () => {
+  document.getElementById('pwaInstallBtn')?.remove();
+  toast('📲 Ilova o\'rnatildi!');
 });
 
 // ============ INIT ============
@@ -493,230 +604,4 @@ $('importBtn').addEventListener('click', () => {
       localStorage.removeItem('token');
     }
   }
-})();// ============ PWA: SERVICE WORKER ============
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker
-      .register('/service-worker.js')
-      .then((reg) => {
-        console.log('✅ Service Worker ro\'yxatdan o\'tdi:', reg.scope);
-      })
-      .catch((err) => {
-        console.warn('⚠️ Service Worker xatosi:', err);
-      });
-  });
-}
-
-// ============ PWA: O'RNATISH TUGMASI ============
-let deferredPrompt = null;
-
-window.addEventListener('beforeinstallprompt', (e) => {
-  e.preventDefault();
-  deferredPrompt = e;
-  
-  // O'rnatish tugmasini ko'rsatamiz
-  showInstallButton();
-});
-
-function showInstallButton() {
-  // Agar allaqachon tugma bo'lsa — qaytaramiz
-  if (document.getElementById('pwaInstallBtn')) return;
-
-  const btn = document.createElement('button');
-  btn.id = 'pwaInstallBtn';
-  btn.innerHTML = '📲 Ilovani o\'rnatish';
-  btn.style.cssText = `
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    padding: 14px 22px;
-    background: linear-gradient(135deg, #6366f1, #8b5cf6);
-    color: white;
-    border: none;
-    border-radius: 14px;
-    font-size: 0.95rem;
-    font-weight: 700;
-    cursor: pointer;
-    z-index: 9999;
-    box-shadow: 0 10px 30px rgba(99, 102, 241, 0.4);
-    font-family: 'Inter', sans-serif;
-    animation: slideIn 0.5s ease;
-  `;
-  
-  btn.onclick = async () => {
-    if (!deferredPrompt) return;
-    deferredPrompt.prompt();
-    const { outcome } = await deferredPrompt.userChoice;
-    console.log('Foydalanuvchi tanlovi:', outcome);
-    deferredPrompt = null;
-    btn.remove();
-  };
-  
-  document.body.appendChild(btn);
-}
-
-// Animatsiya
-const style = document.createElement('style');
-style.textContent = `
-  @keyframes slideIn {
-    from { transform: translateY(100px); opacity: 0; }
-    to { transform: translateY(0); opacity: 1; }
-  }
-`;
-document.head.appendChild(style);
-
-// O'rnatilgandan keyin
-window.addEventListener('appinstalled', () => {
-  console.log('✅ Ilova o\'rnatildi!');
-  const btn = document.getElementById('pwaInstallBtn');
-  if (btn) btn.remove();
-  toast('📲 Ilova muvaffaqiyatli o\'rnatildi!');
-});
-// ============ QURILMANI ANIQLASH ============
-function detectDevice() {
-  const width = window.innerWidth;
-  const height = window.innerHeight;
-  const ua = navigator.userAgent;
-  
-  // Qurilma turi
-  let deviceType = 'desktop';
-  let deviceIcon = '💻';
-  let deviceName = 'Kompyuter';
-  
-  // Telefon aniqlash
-  const isPhone = /iPhone|iPod|Android.*Mobile|Windows Phone|BlackBerry/i.test(ua);
-  const isTablet = /iPad|Android(?!.*Mobile)|Tablet|PlayBook|Silk/i.test(ua);
-  const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
-  
-  // Kenglik bo'yicha
-  if (isPhone || (width <= 480 && isTouchDevice)) {
-    deviceType = 'phone';
-    deviceIcon = '📱';
-    deviceName = 'Telefon';
-  } else if (isTablet || (width <= 768 && isTouchDevice)) {
-    deviceType = 'tablet';
-    deviceIcon = '📱';
-    deviceName = 'Planshet';
-  } else {
-    deviceType = 'desktop';
-    deviceIcon = '💻';
-    deviceName = 'Kompyuter';
-  }
-  
-  // Orientatsiya
-  const orientation = width > height ? 'gorizontal' : 'vertikal';
-  
-  return {
-    type: deviceType,
-    icon: deviceIcon,
-    name: deviceName,
-    width,
-    height,
-    orientation,
-    isTouch: isTouchDevice,
-    pixelRatio: window.devicePixelRatio || 1,
-    online: navigator.onLine
-  };
-}
-
-// ============ QURILMA INDICATOR (ko'rsatkichi) ============
-function showDeviceIndicator() {
-  // Agar allaqachon mavjud bo'lsa — o'chirish
-  const existing = document.getElementById('deviceIndicator');
-  if (existing) existing.remove();
-  
-  const device = detectDevice();
-  
-  // Faqat mobil qurilmalarda ko'rsatamiz
-  const indicator = document.createElement('div');
-  indicator.id = 'deviceIndicator';
-  indicator.style.cssText = `
-    position: fixed;
-    top: 10px;
-    right: 10px;
-    background: linear-gradient(135deg, #6366f1, #8b5cf6);
-    color: white;
-    padding: 6px 12px;
-    border-radius: 20px;
-    font-size: 0.7rem;
-    font-weight: 700;
-    z-index: 9998;
-    font-family: 'Inter', sans-serif;
-    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    opacity: 0.85;
-    transition: opacity 0.3s;
-    cursor: pointer;
-  `;
-  
-  indicator.innerHTML = `
-    <span style="font-size: 1rem;">${device.icon}</span>
-    <span>${device.name}</span>
-    <span style="opacity: 0.7; font-size: 0.65rem;">${device.width}×${device.height}</span>
-  `;
-  
-  // Bosilganda batafsil ma'lumot
-  indicator.onclick = () => {
-    alert(
-      `📱 Qurilma ma'lumotlari:\n\n` +
-      `Turi: ${device.name}\n` +
-      `Ekran: ${device.width} × ${device.height}px\n` +
-      `Orientatsiya: ${device.orientation}\n` +
-      `Touch: ${device.isTouch ? 'Ha' : "Yo'q"}\n` +
-      `Pixel Ratio: ${device.pixelRatio}x\n` +
-      `Internet: ${device.online ? 'Bor ✅' : "Yo'q ❌"}`
-    );
-  };
-  
-  // 3 soniyadan keyin xira qilish
-  document.body.appendChild(indicator);
-  setTimeout(() => {
-    indicator.style.opacity = '0.4';
-  }, 3000);
-  
-  // Hover bilan yana ko'rinadigan qilish
-  indicator.onmouseenter = () => indicator.style.opacity = '1';
-  indicator.onmouseleave = () => indicator.style.opacity = '0.4';
-}
-
-// ============ EKRAN O'ZGARGANDA ============
-let resizeTimer;
-window.addEventListener('resize', () => {
-  clearTimeout(resizeTimer);
-  resizeTimer = setTimeout(() => {
-    // Qurilma o'zgarganini tekshirish
-    const device = detectDevice();
-    const indicator = document.getElementById('deviceIndicator');
-    if (indicator) {
-      indicator.innerHTML = `
-        <span style="font-size: 1rem;">${device.icon}</span>
-        <span>${device.name}</span>
-        <span style="opacity: 0.7; font-size: 0.65rem;">${device.width}×${device.height}</span>
-      `;
-    }
-    
-    // Jadvalni qayta chizish (agar kerak bo'lsa)
-    if (typeof renderSchedule === 'function' && currentUser) {
-      // Faqat kerak bo'lganda
-    }
-  }, 300);
-});
-
-// ============ INTERNET HOLATI ============
-window.addEventListener('online', () => {
-  console.log('✅ Internet qaytdi');
-  if (typeof toast === 'function') toast('✅ Internet qaytdi');
-});
-
-window.addEventListener('offline', () => {
-  console.log('❌ Internet yo\'q');
-  if (typeof toast === 'function') toast('❌ Internet yo\'q — offline rejim', 'error');
-});
-
-// ============ ISHGA TUSHIRISH ============
-// Login sahifasida ham ko'rsatamiz
-document.addEventListener('DOMContentLoaded', () => {
-  showDeviceIndicator();
-});
+})();

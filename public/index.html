@@ -4,20 +4,20 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
   <title>Maktab Jadvali</title>
-
-  <link rel="stylesheet" href="style.css">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-     <link rel="manifest" href="/manifest.json">
+  <link rel="manifest" href="/manifest.json">
   <meta name="theme-color" content="#6366f1">
   <link rel="icon" type="image/svg+xml" href="/icon.svg">
   <link rel="apple-touch-icon" href="/icon.svg">
+  <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Jadval">
+  <link rel="stylesheet" href="style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 </head>
 <body>
 
-  <!-- LOGIN SAHIFASI -->
+  <!-- ============ LOGIN SAHIFASI ============ -->
   <div id="loginScreen" class="login-screen">
     <div class="login-box">
       <div class="login-logo">📚</div>
@@ -29,14 +29,12 @@
         <button class="login-tab" data-tab="register">Ro'yxatdan o'tish</button>
       </div>
 
-      <!-- Kirish formasi -->
       <form id="loginForm" class="login-form">
         <input type="text" id="loginUsername" placeholder="Username" required autocomplete="username">
         <input type="password" id="loginPassword" placeholder="Parol" required autocomplete="current-password">
         <button type="submit">Kirish →</button>
       </form>
 
-      <!-- Ro'yxatdan o'tish formasi -->
       <form id="registerForm" class="login-form hidden">
         <input type="text" id="regName" placeholder="To'liq ism" required>
         <input type="text" id="regUsername" placeholder="Username" required autocomplete="username">
@@ -55,7 +53,7 @@
     </div>
   </div>
 
-  <!-- ASOSIY SAYT -->
+  <!-- ============ ASOSIY SAYT ============ -->
   <div id="app" class="app hidden">
     <header class="header">
       <div class="header-left">
@@ -76,7 +74,7 @@
       <button class="tab" data-view="homework">📝 Uy vazifasi</button>
       <button class="tab" data-view="notes">📌 Izohlar</button>
       <button class="tab" data-view="announcements">📢 E'lonlar</button>
-      <button class="tab" data-view="admin">⚙️ Admin</button>
+      <button class="tab hidden" data-view="admin">⚙️ Admin</button>
     </nav>
 
     <!-- JADVAL -->
@@ -158,6 +156,47 @@
     </section>
   </div>
 
+  <!-- ============ PASTKI MENYU (Telefon) ============ -->
+  <nav id="bottomNav" class="bottom-nav hidden">
+    <button class="bottom-nav-item active" data-view="schedule">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+      </svg>
+      <span>Jadval</span>
+    </button>
+    <button class="bottom-nav-item" data-view="homework">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>
+      </svg>
+      <span>Vazifa</span>
+    </button>
+    <button class="bottom-nav-item" data-view="notes">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/>
+      </svg>
+      <span>Izohlar</span>
+    </button>
+    <button class="bottom-nav-item" data-view="announcements">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 11l19-9-9 19-2-8-8-2z"/>
+      </svg>
+      <span>E'lonlar</span>
+    </button>
+    <button class="bottom-nav-item hidden" data-view="admin" id="bottomNavAdmin">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+      </svg>
+      <span>Admin</span>
+    </button>
+  </nav>
+
+  <!-- ============ FAB (➕ tugmasi) ============ -->
+  <button id="fabBtn" class="fab-btn hidden">
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+    </svg>
+  </button>
+
   <!-- MODAL -->
   <div id="modal" class="modal hidden">
     <div class="modal-content">
@@ -169,7 +208,6 @@
     </div>
   </div>
 
-  <!-- TOAST -->
   <div id="toast" class="toast hidden"></div>
 
   <script src="script.js"></script>
