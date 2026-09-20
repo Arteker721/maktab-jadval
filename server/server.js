@@ -18,9 +18,12 @@ if (!MONGO_URI) {
   process.exit(1);
 }
 
-mongoose.connect(MONGO_URI)
-  .then(() => console.log('✅ MongoDB Atlas\'ga ulandi'))
-  .catch(err => { console.error('❌ MongoDB xatosi:', err.message); process.exit(1); });
+mongoose.connect(MONGO_URI, {
+  serverSelectionTimeoutMS: 120000,  // 60 soniya
+  connectTimeoutMS: 120000,           // 60 soniya
+  socketTimeoutMS: 120000,            // 60 soniya
+  family: 4                          // IPv4 ishlatish
+})
 
 // ============ PASSWORD ============
 function hashPassword(password, salt) {
