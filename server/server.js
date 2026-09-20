@@ -376,16 +376,27 @@ app.use((err, req, res, next) => {
 });
 
 // ============ START ============
-app.listen(PORT, async () => {
-  await initData();
-  console.log('');
-  console.log('╔════════════════════════════════════════╗');
-  console.log('║   ✅ SERVER ISHGA TUSHDI               ║');
-  console.log('╠════════════════════════════════════════╣');
-  console.log(`║   🌐 http://localhost:${PORT}             ║`);
-  console.log('╠════════════════════════════════════════╣');
-  console.log('║   👤 Admin:   admin / admin123         ║');
-  console.log('║   👨‍🏫 Teacher: teacher / teacher123     ║');
-  console.log('╚════════════════════════════════════════╝');
-  console.log('');
+mongoose.connect(MONGO_URI, {
+  serverSelectionTimeoutMS: 30000 // 30 soniya kutish
+})
+.then(async () => {
+  console.log('✅ MongoDB Atlas\'ga ulandi');
+  await initData(); // Endi initData ulangandan KEYIN ishga tushadi
+  
+  app.listen(PORT, () => {
+    console.log('');
+    console.log('╔════════════════════════════════════════╗');
+    console.log('║   ✅ SERVER ISHGA TUSHDI               ║');
+    console.log('╠════════════════════════════════════════╣');
+    console.log(`║   🌐 http://localhost:${PORT}             ║`);
+    console.log('╠════════════════════════════════════════╣');
+    console.log('║   👤 Admin:   admin / admin123         ║');
+    console.log('║   👨‍🏫 Teacher: teacher / teacher123     ║');
+    console.log('╚════════════════════════════════════════╝');
+    console.log('');
+  });
+})
+.catch(err => {
+  console.error('❌ MongoDB xatosi:', err.message);
+  process.exit(1);
 });
