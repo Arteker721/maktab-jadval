@@ -38,15 +38,8 @@ function escapeHtml(s) {
 }
 
 function getTodayName() {
-  const map = { 1: 'Dushanba', 2: 'Seshanba', 3: 'Chorshanba', 4: 'Payshanba', 5: 'Juma', 6: 'Shanba' };
+  const map = { 0: 'Yakshanba', 1: 'Dushanba', 2: 'Seshanba', 3: 'Chorshanba', 4: 'Payshanba', 5: 'Juma', 6: 'Shanba' };
   return map[new Date().getDay()] || 'Dushanba';
-}
-
-function getTodayDate() {
-  const days = ['yakshanba', 'dushanba', 'seshanba', 'chorshanba', 'payshanba', 'juma', 'shanba'];
-  const months = ['yanvar', 'fevral', 'mart', 'aprel', 'may', 'iyun', 'iyul', 'avgust', 'sentabr', 'oktabr', 'noyabr', 'dekabr'];
-  const d = new Date();
-  return `${days[d.getDay()].charAt(0).toUpperCase() + days[d.getDay()].slice(1)}, ${d.getDate()}-${months[d.getMonth()]}`;
 }
 
 // ============ AUTH ============
@@ -155,10 +148,9 @@ async function showApp() {
     $('bottomNavAdmin').classList.remove('hidden');
   }
   if (currentUser.role === 'admin') {
-    document.querySelector('[data-view="admin"]').classList.remove('hidden');
+    document.querySelector('.tab[data-view="admin"]').classList.remove('hidden');
   }
 
-  // Bottom nav va FAB ni ko'rsatish
   $('bottomNav')?.classList.remove('hidden');
   $('fabBtn')?.classList.remove('hidden');
 
@@ -179,8 +171,8 @@ async function loadSubjects() { try { subjects = await api('/subjects'); } catch
 async function loadLessons() { try { lessons = await api('/lessons'); } catch {} }
 async function loadFavorites() { try { favorites = await api('/favorites'); } catch {} }
 
-// ============ SCHEDULE (noutbuk uchun jadval) ============
-const days = ['Dushanba', 'Seshanba', 'Chorshanba', 'Payshanba', 'Juma', 'Shanba'];
+// ============ SCHEDULE ============
+const days = ['Dushanba', 'Seshanba', 'Chorshanba', 'Payshanba', 'Juma', 'Shanba', 'Yakshanba'];
 const timeSlots = ['08:00', '09:00', '10:00', '11:00', '12:00', '13:00'];
 
 function getSubjectColor(subjectName) {
@@ -241,7 +233,7 @@ function renderSchedule() {
   });
 }
 
-// ============ KUNLIK KO'RINISH (telefon uchun) ============
+// ============ KUNLIK KO'RINISH ============
 function renderDayView() {
   const container = $('dayLessons');
   const headerDate = $('dayHeaderDate');
@@ -264,9 +256,7 @@ function renderDayView() {
     .sort((a, b) => a.start.localeCompare(b.start));
 
   if (headerCount) {
-    headerCount.textContent = dayLessons.length === 0
-      ? "Dars yo'q"
-      : `${dayLessons.length} ta dars`;
+    headerCount.textContent = dayLessons.length === 0 ? "Dars yo'q" : `${dayLessons.length} ta dars`;
   }
 
   if (dayLessons.length === 0) {
@@ -553,7 +543,7 @@ window.delUser = async (id) => {
 };
 window.delSubject = async (id) => {
   if (!confirm('O\'chirmoqchimisiz?')) return;
-  try { await api('/subjects/' + id, { method: 'DELETE' }); await loadSubjects(); loadAdmin(); toast('🗑️'); }
+  try { await api('/subjects/' + id, { method: 'DELETE' }); await loadSubjects(); loadAdmin(); renderSchedule(); renderDayView(); toast('🗑️'); }
   catch (e) { toast('❌ ' + e.message, 'error'); }
 };
 

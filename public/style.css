@@ -158,10 +158,10 @@ body {
   background: var(--card); border-radius: 20px; padding: 20px;
   box-shadow: var(--shadow-sm); overflow-x: auto;
 }
-table { width: 100%; border-collapse: separate; border-spacing: 0; min-width: 850px; }
+table { width: 100%; border-collapse: separate; border-spacing: 0; min-width: 950px; }
 th {
   background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white;
-  padding: 14px 8px; font-size: 0.85rem; text-align: center;
+  padding: 14px 6px; font-size: 0.8rem; text-align: center;
 }
 th:first-child { border-radius: 12px 0 0 0; }
 th:last-child { border-radius: 0 12px 0 0; }
@@ -172,7 +172,7 @@ td { padding: 8px; text-align: center; border-bottom: 1px solid var(--border); v
 }
 body.dark .time-cell { background: #312e81; color: #c7d2fe; }
 
-/* LESSON CARD */
+/* LESSON CARD (jadval ichida) */
 .lesson-cell {
   background: linear-gradient(135deg, #eff6ff, #e0e7ff);
   border-left: 4px solid var(--primary); border-radius: 10px;
@@ -181,8 +181,8 @@ body.dark .time-cell { background: #312e81; color: #c7d2fe; }
 }
 body.dark .lesson-cell { background: linear-gradient(135deg, #1e293b, #334155); }
 .lesson-cell:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
-.lesson-subject { font-weight: 700; display: block; margin-bottom: 4px; font-size: 0.85rem; }
-.lesson-info { font-size: 0.75rem; color: var(--text-light); display: block; }
+.lesson-subject { font-weight: 700; display: block; margin-bottom: 4px; font-size: 0.8rem; }
+.lesson-info { font-size: 0.7rem; color: var(--text-light); display: block; }
 .lesson-actions { display: flex; gap: 4px; margin-top: 6px; opacity: 0; transition: opacity 0.2s; }
 .lesson-cell:hover .lesson-actions { opacity: 1; }
 .lesson-actions button {
@@ -276,155 +276,10 @@ body.dark .lesson-cell { background: linear-gradient(135deg, #1e293b, #334155); 
   max-width: 90vw;
 }
 
-/* ============ BOTTOM NAVIGATION ============ */
-.bottom-nav {
-  display: none;
-  position: fixed;
-  bottom: 0; left: 0; right: 0;
-  background: var(--card);
-  border-top: 1px solid var(--border);
-  padding: 6px 0 calc(6px + env(safe-area-inset-bottom));
-  z-index: 500;
-  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.08);
-  justify-content: space-around;
-  align-items: center;
-}
-
-.bottom-nav-item {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-  padding: 8px 2px;
-  background: transparent;
-  border: none;
-  color: var(--text-light);
-  font-size: 0.65rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.15s;
-  font-family: 'Inter', sans-serif;
-  border-radius: 10px;
-  margin: 0 2px;
-}
-
-.bottom-nav-item:active { transform: scale(0.92); }
-.bottom-nav-item.active { color: var(--primary); background: rgba(99, 102, 241, 0.1); }
-.bottom-nav-item span { font-size: 0.62rem; letter-spacing: -0.02em; }
-.bottom-nav-item svg { width: 22px; height: 22px; }
-
-/* FAB */
-.fab-btn {
-  position: fixed;
-  bottom: 80px;
-  right: 16px;
-  width: 56px;
-  height: 56px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #6366f1, #8b5cf6);
-  color: white;
-  border: none;
-  cursor: pointer;
-  z-index: 600;
-  box-shadow: 0 8px 24px rgba(99, 102, 241, 0.4);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s;
-  animation: fabIn 0.4s ease;
-}
-
-@keyframes fabIn {
-  from { transform: scale(0) rotate(-180deg); opacity: 0; }
-  to { transform: scale(1) rotate(0); opacity: 1; }
-}
-
-.fab-btn:active { transform: scale(0.9); }
-
-/* ============ TELEFON ============ */
-@media (max-width: 768px) {
-  .app { padding: 12px; padding-bottom: 95px; }
-  
-  .header { padding: 12px 15px; flex-direction: column; align-items: stretch; gap: 10px; }
-  .header-left { gap: 10px; }
-  .logo { width: 44px; height: 44px; font-size: 1.5rem; }
-  .header h1 { font-size: 1rem; }
-  .header p { font-size: 0.75rem; }
-  .header-right { justify-content: space-between; }
-  .logout-btn { padding: 8px 14px; font-size: 0.85rem; }
-  .icon-btn { width: 36px; height: 36px; font-size: 1rem; }
-  
-  /* Yuqoridagi tabs ni yashiramiz */
-  .tabs { display: none !important; }
-  
-  /* Bottom nav ni ko'rsatamiz */
-  .bottom-nav:not(.hidden) { display: flex; }
-  
-  /* FAB ni ko'rsatamiz */
-  .fab-btn:not(.hidden) { display: flex; }
-  
-  /* Controls */
-  .controls { flex-direction: column; gap: 8px; }
-  .controls input, .controls select { width: 100%; padding: 12px 14px; font-size: 0.9rem; }
-  .add-btn { display: none !important; }
-  
-  /* Jadval */
-  .table-section { padding: 10px; border-radius: 15px; }
-  table { min-width: 700px; }
-  th { padding: 10px 6px; font-size: 0.75rem; }
-  td { padding: 5px; }
-  .time-cell { padding: 8px 5px; font-size: 0.7rem; }
-  .lesson-cell { padding: 10px; margin: 2px 0; border-radius: 12px; min-height: 55px; }
-  .lesson-subject { font-size: 0.85rem; }
-  .lesson-info { font-size: 0.7rem; }
-  .lesson-actions { opacity: 1; }
-  .lesson-actions button { padding: 4px 8px; font-size: 0.7rem; }
-  
-  /* Lists */
-  .list-item { padding: 12px; flex-direction: column; align-items: stretch; gap: 8px; }
-  
-  /* Inline form */
-  .inline-form { flex-direction: column; }
-  .inline-form input, .inline-form button { width: 100%; }
-  
-  /* Admin */
-  .admin-grid { grid-template-columns: 1fr; gap: 12px; }
-  .admin-card { padding: 15px; }
-  
-  /* Modal */
-  .modal { padding: 10px; }
-  .modal-content { padding: 20px; border-radius: 16px; max-height: 95vh; }
-  .form-row.two { grid-template-columns: 1fr; }
-  .modal-actions { flex-direction: column-reverse; gap: 8px; }
-  .modal-actions button { padding: 13px; }
-  
-  /* Login */
-  .login-box { padding: 25px 20px; }
-  .login-logo { font-size: 3rem; }
-  .login-box h1 { font-size: 1.4rem; }
-  .login-form input, .login-form select { padding: 12px 14px; }
-  
-  /* Toast */
-  .toast { bottom: 90px; font-size: 0.85rem; padding: 12px 18px; }
-}
-
-/* Katta telefonlar uchun FAB */
-@media (min-width: 481px) and (max-width: 768px) {
-  .fab-btn { bottom: 90px; right: 20px; }
-}
-
-/* ============ TOUCH DEVICE ============ */
-@media (hover: none) and (pointer: coarse) {
-  button, .tab, .add-btn { min-height: 44px; }
-  .lesson-cell:hover { transform: none; }
-  .lesson-cell:active { transform: scale(0.98); }
-  .stat-card:hover { transform: none; }
-}
 /* ============ KUN TANLASH (telefon) ============ */
 .day-selector {
   display: none;
-  gap: 6px;
+  gap: 4px;
   margin-bottom: 12px;
   padding: 6px;
   background: var(--card);
@@ -438,13 +293,13 @@ body.dark .lesson-cell { background: linear-gradient(135deg, #1e293b, #334155); 
 
 .day-tab {
   flex: 1;
-  min-width: 50px;
-  padding: 10px 6px;
+  min-width: 42px;
+  padding: 10px 4px;
   border: none;
   background: transparent;
   border-radius: 10px;
   font-weight: 700;
-  font-size: 0.85rem;
+  font-size: 0.75rem;
   color: var(--text-light);
   cursor: pointer;
   transition: all 0.2s;
@@ -553,9 +408,6 @@ body.dark .day-lesson-num { background: #334155; }
   font-size: 1rem;
   color: var(--text);
   margin-bottom: 2px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
 }
 
 .day-lesson-time {
@@ -628,12 +480,138 @@ body.dark .day-lesson-num { background: #334155; }
   font-weight: 600;
 }
 
-/* ============ TELEFON UCHUN ============ */
+/* ============ BOTTOM NAVIGATION ============ */
+.bottom-nav {
+  display: none;
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  background: var(--card);
+  border-top: 1px solid var(--border);
+  padding: 6px 0 calc(6px + env(safe-area-inset-bottom));
+  z-index: 500;
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.08);
+  justify-content: space-around;
+  align-items: center;
+}
+
+.bottom-nav-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 8px 2px;
+  background: transparent;
+  border: none;
+  color: var(--text-light);
+  font-size: 0.65rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: 'Inter', sans-serif;
+  border-radius: 10px;
+  margin: 0 2px;
+}
+
+.bottom-nav-item:active { transform: scale(0.92); }
+.bottom-nav-item.active { color: var(--primary); background: rgba(99, 102, 241, 0.1); }
+.bottom-nav-item span { font-size: 0.62rem; letter-spacing: -0.02em; }
+.bottom-nav-item svg { width: 22px; height: 22px; }
+
+/* FAB */
+.fab-btn {
+  position: fixed;
+  bottom: 80px;
+  right: 16px;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  color: white;
+  border: none;
+  cursor: pointer;
+  z-index: 600;
+  box-shadow: 0 8px 24px rgba(99, 102, 241, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  animation: fabIn 0.4s ease;
+}
+
+@keyframes fabIn {
+  from { transform: scale(0) rotate(-180deg); opacity: 0; }
+  to { transform: scale(1) rotate(0); opacity: 1; }
+}
+
+.fab-btn:active { transform: scale(0.9); }
+
+/* ============ TELEFON ============ */
 @media (max-width: 768px) {
+  .app { padding: 12px; padding-bottom: 95px; }
+  
+  .header { padding: 12px 15px; flex-direction: column; align-items: stretch; gap: 10px; }
+  .header-left { gap: 10px; }
+  .logo { width: 44px; height: 44px; font-size: 1.5rem; }
+  .header h1 { font-size: 1rem; }
+  .header p { font-size: 0.75rem; }
+  .header-right { justify-content: space-between; }
+  .logout-btn { padding: 8px 14px; font-size: 0.85rem; }
+  .icon-btn { width: 36px; height: 36px; font-size: 1rem; }
+  
+  /* Yuqoridagi tabs ni yashiramiz */
+  .tabs { display: none !important; }
+  
+  /* Bottom nav ni ko'rsatamiz */
+  .bottom-nav:not(.hidden) { display: flex; }
+  
+  /* FAB ni ko'rsatamiz */
+  .fab-btn:not(.hidden) { display: flex; }
+  
+  /* Kun tanlash va kunlik ko'rinish */
   .day-selector,
-  .day-header,
-  .day-lessons { display: flex; }
+  .day-header { display: flex; }
   .day-lessons { display: flex; flex-direction: column; }
   
+  /* Noutbuk uchun jadval yashiriladi */
   .desktop-only { display: none !important; }
+  
+  /* Controls */
+  .controls { flex-direction: column; gap: 8px; }
+  .controls input, .controls select { width: 100%; padding: 12px 14px; font-size: 0.9rem; }
+  .add-btn { display: none !important; }
+  
+  /* Lists */
+  .list-item { padding: 12px; flex-direction: column; align-items: stretch; gap: 8px; }
+  
+  /* Inline form */
+  .inline-form { flex-direction: column; }
+  .inline-form input, .inline-form button { width: 100%; }
+  
+  /* Admin */
+  .admin-grid { grid-template-columns: 1fr; gap: 12px; }
+  .admin-card { padding: 15px; }
+  
+  /* Modal */
+  .modal { padding: 10px; }
+  .modal-content { padding: 20px; border-radius: 16px; max-height: 95vh; }
+  .form-row.two { grid-template-columns: 1fr; }
+  .modal-actions { flex-direction: column-reverse; gap: 8px; }
+  .modal-actions button { padding: 13px; }
+  
+  /* Login */
+  .login-box { padding: 25px 20px; }
+  .login-logo { font-size: 3rem; }
+  .login-box h1 { font-size: 1.4rem; }
+  .login-form input, .login-form select { padding: 12px 14px; }
+  
+  /* Toast */
+  .toast { bottom: 90px; font-size: 0.85rem; padding: 12px 18px; }
+}
+
+/* ============ TOUCH DEVICE ============ */
+@media (hover: none) and (pointer: coarse) {
+  button, .tab, .add-btn { min-height: 44px; }
+  .lesson-cell:hover { transform: none; }
+  .lesson-cell:active { transform: scale(0.98); }
 }
