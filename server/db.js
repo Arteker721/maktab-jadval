@@ -7,7 +7,6 @@ if (!DATABASE_URL) {
   process.exit(1);
 }
 
-// Linkdagi sslmode/channel_binding qismlari ssl sozlamamizni buzmasligi uchun olib tashlaymiz
 let connectionString = DATABASE_URL.trim();
 try {
   const u = new URL(connectionString);
@@ -15,7 +14,7 @@ try {
   u.searchParams.delete('channel_binding');
   connectionString = u.toString();
 } catch (e) {
-  console.error("⚠️ DATABASE_URL formati g'alati, o'zgartirmasdan ishlatilyapti");
+  console.error("⚠️ DATABASE_URL formati g'alati");
 }
 
 const pool = new Pool({
@@ -27,9 +26,8 @@ const pool = new Pool({
   keepAlive: true,
 });
 
-// Neon bo'sh turgan ulanishlarni yopib qo'yadi. Bu xato serverni yiqitmasligi uchun:
 pool.on('error', (err) => {
-  console.error("⚠️ Pool xatosi (e'tiborsiz qoldirildi):", err.message);
+  console.error("⚠️ Pool xatosi:", err.message);
 });
 
 const SCHEMA = `
@@ -103,6 +101,12 @@ CREATE TABLE IF NOT EXISTS tokens (
   token text PRIMARY KEY,
   user_id uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   created_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS settings (
+  key text PRIMARY KEY,
+  value text NOT NULL,
+  updated_at timestamptz NOT NULL DEFAULT now()
 );
 `;
 

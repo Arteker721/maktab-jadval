@@ -10,15 +10,45 @@
   <link rel="apple-touch-icon" href="/icon.svg">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="Jadval">
   <link rel="stylesheet" href="style.css">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 </head>
 <body>
 
+  <!-- ============ ONBOARDING ============ -->
+  <div id="onboarding" class="onboarding hidden">
+    <div class="onboarding-slides">
+      <div class="onboarding-slide active" data-slide="1">
+        <div class="onboarding-icon">📚</div>
+        <h2>Dars jadvalingiz cho'ntagingizda</h2>
+        <p>Telefon va kompyuterda dars jadvalingizni oson ko'ring</p>
+      </div>
+      <div class="onboarding-slide" data-slide="2">
+        <div class="onboarding-icon">🔔</div>
+        <h2>Eslatmalar bilan xabardor bo'ling</h2>
+        <p>Dars boshlanishidan oldin ovozli eslatma olasiz</p>
+      </div>
+      <div class="onboarding-slide" data-slide="3">
+        <div class="onboarding-icon">📝</div>
+        <h2>Vazifalar va e'lonlar</h2>
+        <p>Uy vazifalarini kuzatib boring va e'lonlarni o'qing</p>
+      </div>
+    </div>
+
+    <div class="onboarding-dots">
+      <span class="dot active"></span>
+      <span class="dot"></span>
+      <span class="dot"></span>
+    </div>
+
+    <div class="onboarding-actions">
+      <button id="onboardingSkip" class="onboarding-skip">O'tkazib yuborish</button>
+      <button id="onboardingNext" class="onboarding-btn">Keyingisi →</button>
+    </div>
+  </div>
+
   <!-- ============ LOGIN ============ -->
-  <div id="loginScreen" class="login-screen">
+  <div id="loginScreen" class="login-screen hidden">
     <div class="login-box">
       <div class="login-logo">📚</div>
       <h1>Maktab Jadvali</h1>
@@ -32,28 +62,48 @@
       <form id="loginForm" class="login-form">
         <input type="text" id="loginUsername" placeholder="Username" required autocomplete="username">
         <input type="password" id="loginPassword" placeholder="Parol" required autocomplete="current-password">
+        <label class="checkbox-row">
+          <input type="checkbox" id="rememberMe">
+          <span>Meni eslab qol</span>
+        </label>
         <button type="submit">Kirish →</button>
       </form>
 
       <form id="registerForm" class="login-form hidden">
         <input type="text" id="regName" placeholder="To'liq ism" required>
-        <input type="text" id="regUsername" placeholder="Username" required autocomplete="username">
+        <input type="text" id="regUsername" placeholder="Username" required>
         <input type="password" id="regPassword" placeholder="Parol (kamida 4 belgi)" required minlength="4">
         <select id="regRole">
           <option value="student">O'quvchi</option>
           <option value="teacher">O'qituvchi</option>
         </select>
-        <input type="text" id="regClass" placeholder="Sinf (masalan: 7-A)">
+        <select id="regClass">
+          <option value="">Sinf tanlang</option>
+          <option value="5-A">5-A</option>
+          <option value="5-B">5-B</option>
+          <option value="6-A">6-A</option>
+          <option value="6-B">6-B</option>
+          <option value="7-A">7-A</option>
+          <option value="7-B">7-B</option>
+          <option value="8-A">8-A</option>
+          <option value="8-B">8-B</option>
+          <option value="9-A">9-A</option>
+          <option value="9-B">9-B</option>
+          <option value="10-A">10-A</option>
+          <option value="10-B">10-B</option>
+          <option value="11-A">11-A</option>
+          <option value="11-B">11-B</option>
+        </select>
         <button type="submit">Ro'yxatdan o'tish →</button>
       </form>
 
       <div class="login-hint">
-        <small>Demo: <b>admin</b> / <b>admin123</b></small>
+        <small>Parolni unutdingizmi? Adminstratorga murojaat qiling</small>
       </div>
     </div>
   </div>
 
-  <!-- ============ ASOSIY SAYT ============ -->
+  <!-- ============ ASOSIY ============ -->
   <div id="app" class="app hidden">
     <header class="header">
       <div class="header-left">
@@ -64,6 +114,7 @@
         </div>
       </div>
       <div class="header-right">
+        <button id="notifBtn" class="icon-btn" title="Eslatmalar">🔔</button>
         <button id="darkModeBtn" class="icon-btn" title="Tungi rejim">🌙</button>
         <button id="logoutBtn" class="logout-btn">Chiqish</button>
       </div>
@@ -77,9 +128,7 @@
       <button class="tab hidden" data-view="admin">⚙️ Admin</button>
     </nav>
 
-    <!-- JADVAL -->
     <section id="view-schedule" class="view">
-      <!-- Kun tanlash (telefon uchun) -->
       <div class="day-selector" id="daySelector">
         <button class="day-tab" data-day="Dushanba">Du</button>
         <button class="day-tab" data-day="Seshanba">Se</button>
@@ -90,7 +139,6 @@
         <button class="day-tab" data-day="Yakshanba">Yak</button>
       </div>
 
-      <!-- Bugungi ma'lumot (telefon uchun) -->
       <div class="day-header" id="dayHeader">
         <div>
           <div class="day-header-date" id="dayHeaderDate">—</div>
@@ -99,10 +147,8 @@
         <div class="day-header-icon">📅</div>
       </div>
 
-      <!-- Kunlik kartochkalar (telefon uchun) -->
       <div class="day-lessons" id="dayLessons"></div>
 
-      <!-- Jadval (noutbuk uchun) -->
       <div class="controls desktop-only">
         <input type="text" id="searchInput" placeholder="🔍 Fan yoki o'qituvchi...">
         <select id="dayFilter">
@@ -122,13 +168,8 @@
           <thead>
             <tr>
               <th>Vaqt</th>
-              <th>Dushanba</th>
-              <th>Seshanba</th>
-              <th>Chorshanba</th>
-              <th>Payshanba</th>
-              <th>Juma</th>
-              <th>Shanba</th>
-              <th>Yakshanba</th>
+              <th>Dushanba</th><th>Seshanba</th><th>Chorshanba</th>
+              <th>Payshanba</th><th>Juma</th><th>Shanba</th><th>Yakshanba</th>
             </tr>
           </thead>
           <tbody id="scheduleBody"></tbody>
@@ -136,14 +177,12 @@
       </div>
     </section>
 
-    <!-- UY VAZIFASI -->
     <section id="view-homework" class="view hidden">
       <h2>📝 Uy vazifalari</h2>
       <div id="homeworkList" class="list-container"></div>
       <button id="addHwBtn" class="add-btn hidden" style="margin-top:20px;">➕ Vazifa qo'shish</button>
     </section>
 
-    <!-- IZOHLAR -->
     <section id="view-notes" class="view hidden">
       <h2>📌 Shaxsiy izohlar</h2>
       <form id="noteForm" class="inline-form">
@@ -153,14 +192,12 @@
       <div id="notesList" class="list-container"></div>
     </section>
 
-    <!-- E'LONLAR -->
     <section id="view-announcements" class="view hidden">
       <h2>📢 E'lonlar</h2>
       <div id="announcementsList" class="list-container"></div>
       <button id="addAnnBtn" class="add-btn hidden" style="margin-top:20px;">➕ E'lon qo'shish</button>
     </section>
 
-    <!-- ADMIN -->
     <section id="view-admin" class="view hidden">
       <h2>⚙️ Admin Panel</h2>
       <div class="admin-grid">
@@ -173,52 +210,65 @@
           <div id="subjectsList"></div>
           <button id="addSubjectBtn" class="small-btn">➕ Fan qo'shish</button>
         </div>
+        <div class="admin-card">
+          <h3>🔔 Eslatma sozlamalari</h3>
+          <div class="form-row">
+            <label><input type="checkbox" id="notifEnabled"> Eslatmalar yoqilgan</label>
+          </div>
+          <div class="form-row">
+            <label>Darsdan necha daqiqa oldin?</label>
+            <input type="number" id="notifMinutes" value="60" min="1" max="120">
+          </div>
+          <div class="form-row">
+            <label>Ovoz turi</label>
+            <select id="notifSound">
+              <option value="bell">🔔 Qo'ng'iroq</option>
+              <option value="chime">🎵 Chime</option>
+              <option value="alert">⚠️ Alert</option>
+              <option value="beep">📢 Beep</option>
+            </select>
+          </div>
+          <div class="form-row">
+            <label>Xabar matni</label>
+            <input type="text" id="notifMessage" value="Dars boshlanadi">
+          </div>
+          <div class="form-row">
+            <label><input type="checkbox" id="notifyLate"> Kechikkan darslar uchun ham eslatish</label>
+          </div>
+          <button id="saveNotifSettings" class="small-btn">💾 Saqlash</button>
+          <button id="testNotifBtn" class="small-btn">🔊 Test</button>
+        </div>
       </div>
     </section>
   </div>
 
-  <!-- ============ PASTKI MENYU ============ -->
   <nav id="bottomNav" class="bottom-nav hidden">
     <button class="bottom-nav-item active" data-view="schedule">
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
-      </svg>
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
       <span>Jadval</span>
     </button>
     <button class="bottom-nav-item" data-view="homework">
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>
-      </svg>
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
       <span>Vazifa</span>
     </button>
     <button class="bottom-nav-item" data-view="notes">
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/>
-      </svg>
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/></svg>
       <span>Izohlar</span>
     </button>
     <button class="bottom-nav-item" data-view="announcements">
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M3 11l19-9-9 19-2-8-8-2z"/>
-      </svg>
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l19-9-9 19-2-8-8-2z"/></svg>
       <span>E'lonlar</span>
     </button>
     <button class="bottom-nav-item hidden" data-view="admin" id="bottomNavAdmin">
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
-      </svg>
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
       <span>Admin</span>
     </button>
   </nav>
 
-  <!-- FAB -->
   <button id="fabBtn" class="fab-btn hidden">
-    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-      <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
-    </svg>
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
   </button>
 
-  <!-- MODAL -->
   <div id="modal" class="modal hidden">
     <div class="modal-content">
       <div class="modal-header">

@@ -10,6 +10,7 @@ let announcements = [];
 let users = [];
 let favorites = [];
 let selectedDay = null;
+let notifSettings = {};
 
 async function api(path, opts = {}) {
   const headers = { 'Content-Type': 'application/json', ...(opts.headers || {}) };
@@ -42,7 +43,65 @@ function getTodayName() {
   return map[new Date().getDay()] || 'Dushanba';
 }
 
+// ============ ONBOARDING ============
+let currentSlide = 0;
+
+function initOnboarding() {
+  const seen = localStorage.getItem('onboarding_seen');
+  const onboarding = $('onboarding');
+  const loginScreen = $('loginScreen');
+
+  if (!seen) {
+    onboarding.classList.remove('hidden');
+    loginScreen.classList.add('hidden');
+  } else {
+    onboarding.classList.add('hidden');
+    loginScreen.classList.remove('hidden');
+  }
+
+  const slides = document.querySelectorAll('.onboarding-slide');
+  const dots = document.querySelectorAll('.onboarding-dots .dot');
+  const nextBtn = $('onboardingNext');
+  const skipBtn = $('onboardingSkip');
+
+  function showSlide(n) {
+    slides.forEach((s, i) => s.classList.toggle('active', i === n));
+    dots.forEach((d, i) => d.classList.toggle('active', i === n));
+    nextBtn.textContent = n === slides.length - 1 ? 'Boshlash 🚀' : 'Keyingisi →';
+  }
+
+  nextBtn.onclick = () => {
+    if (currentSlide < slides.length - 1) {
+      currentSlide++;
+      showSlide(currentSlide);
+    } else {
+      finishOnboarding();
+    }
+  };
+
+  skipBtn.onclick = finishOnboarding;
+}
+
+function finishOnboarding() {
+  localStorage.setItem('onboarding_seen', '1');
+  $('onboarding').classList.add('hidden');
+  $('loginScreen').classList.remove('hidden');
+  currentSlide = 0;
+  document.querySelectorAll('.onboarding-slide').forEach((s, i) => s.classList.toggle('active', i === 0));
+  document.querySelectorAll('.onboarding-dots .dot').forEach((d, i) => d.classList.toggle('active', i === 0));
+  $('onboardingNext').textContent = 'Keyingisi →';
+}
+
 // ============ AUTH ============
+// Eslab qolish
+const savedUsername = localStorage.getItem('saved_username');
+if (savedUsername) {
+  const loginInput = $('loginUsername');
+  if (loginInput) loginInput.value = savedUsername;
+  const remember = $('rememberMe');
+  if (remember) remember.checked = true;
+}
+
 $('loginForm').addEventListener('submit', async (e) => {
   e.preventDefault();
   try {
@@ -56,6 +115,14 @@ $('loginForm').addEventListener('submit', async (e) => {
     token = data.token;
     currentUser = data.user;
     localStorage.setItem('token', token);
+
+    // Eslab qolish
+    if ($('rememberMe') && $('rememberMe').checked) {
+      localStorage.setItem('saved_username', data.user.username);
+    } else {
+      localStorage.removeItem('saved_username');
+    }
+
     showApp();
     toast('✅ Xush kelibsiz, ' + currentUser.name);
   } catch (e) { toast('❌ ' + e.message, 'error'); }
@@ -159,6 +226,9 @@ async function showApp() {
   updateFabVisibility();
 
   await loadAll();
+  await loadNotifSettings();
+  initNotifications();
+  startNotifTimer();
 }
 
 async function loadAll() {
@@ -218,8 +288,8 @@ function renderSchedule() {
           <span class="lesson-info">👨‍🏫 ${escapeHtml(lesson.teacher || '')}</span>
           <span class="lesson-info">🚪 ${escapeHtml(lesson.room || '')}</span>
           <div class="lesson-actions">
-            <button class="edit-btn" data-id="${lesson.id}">✏️</button>
-            <button class="delete-btn" data-id="${lesson.id}">🗑️</button>
+            <button class="edit-btn">✏️</button>
+            <button class="delete-btn">🗑️</button>
           </div>
         `;
         div.querySelector('.edit-btn').addEventListener('click', e => { e.stopPropagation(); openLessonModal(lesson); });
@@ -233,7 +303,7 @@ function renderSchedule() {
   });
 }
 
-// ============ KUNLIK KO'RINISH ============
+// ============ KUNLIK ============
 function renderDayView() {
   const container = $('dayLessons');
   const headerDate = $('dayHeaderDate');
@@ -243,9 +313,7 @@ function renderDayView() {
   const today = getTodayName();
   const day = selectedDay || today;
 
-  if (headerDate) {
-    headerDate.textContent = day === today ? `Bugun — ${day}` : day;
-  }
+  if (headerDate) headerDate.textContent = day === today ? `Bugun — ${day}` : day;
 
   document.querySelectorAll('.day-tab').forEach(tab => {
     tab.classList.toggle('active', tab.dataset.day === day);
@@ -255,9 +323,7 @@ function renderDayView() {
     .filter(l => l.day === day)
     .sort((a, b) => a.start.localeCompare(b.start));
 
-  if (headerCount) {
-    headerCount.textContent = dayLessons.length === 0 ? "Dars yo'q" : `${dayLessons.length} ta dars`;
-  }
+  if (headerCount) headerCount.textContent = dayLessons.length === 0 ? "Dars yo'q" : `${dayLessons.length} ta dars`;
 
   if (dayLessons.length === 0) {
     container.innerHTML = `
@@ -309,10 +375,7 @@ function renderDayView() {
     };
   });
   container.querySelectorAll('[data-del]').forEach(btn => {
-    btn.onclick = (e) => {
-      e.stopPropagation();
-      deleteLesson(btn.dataset.del);
-    };
+    btn.onclick = (e) => { e.stopPropagation(); deleteLesson(btn.dataset.del); };
   });
 }
 
@@ -321,15 +384,11 @@ function initDaySelector() {
   if (!selector) return;
   selectedDay = getTodayName();
   selector.querySelectorAll('.day-tab').forEach(tab => {
-    tab.onclick = () => {
-      selectedDay = tab.dataset.day;
-      renderDayView();
-    };
+    tab.onclick = () => { selectedDay = tab.dataset.day; renderDayView(); };
   });
   renderDayView();
 }
 
-// ============ FILTRLAR ============
 $('searchInput').addEventListener('input', renderSchedule);
 $('dayFilter').addEventListener('change', renderSchedule);
 
@@ -349,7 +408,6 @@ $('addLessonBtn').addEventListener('click', () => openLessonModal());
 function openLessonModal(lesson = null) {
   const editing = !!lesson;
   const html = `
-    <input type="hidden" id="mId" value="${lesson?.id || ''}">
     <div class="form-row">
       <label>Kun</label>
       <select id="mDay" required>
@@ -509,7 +567,7 @@ $('addAnnBtn').addEventListener('click', () => {
       await api('/announcements', { method: 'POST', body: JSON.stringify({
         title: $('annTitle').value, text: $('annText').value
       })});
-      closeModal(); loadAnnouncements(); toast('✅ E\'lon qo\'shildi');
+      closeModal(); loadAnnouncements(); toast('✅');
     } catch (e) { toast('❌ ' + e.message, 'error'); }
   });
 });
@@ -534,6 +592,9 @@ async function loadAdmin() {
         <button class="delete-btn" onclick="delSubject('${s.id}')">🗑️</button>
       </div>
     `).join('');
+
+    // Eslatma sozlamalari
+    await loadNotifSettings();
   } catch (e) { toast('❌ ' + e.message, 'error'); }
 }
 window.delUser = async (id) => {
@@ -566,7 +627,204 @@ $('addSubjectBtn').addEventListener('click', () => {
   });
 });
 
-// ============ BOTTOM NAVIGATION ============
+// ============ NOTIFICATION SETTINGS ============
+async function loadNotifSettings() {
+  try {
+    notifSettings = await api('/settings');
+    if ($('notifEnabled')) {
+      $('notifEnabled').checked = notifSettings.notifications_enabled === 'true';
+      $('notifMinutes').value = notifSettings.notify_minutes_before || 60;
+      $('notifSound').value = notifSettings.notification_sound || 'bell';
+      $('notifMessage').value = notifSettings.notification_message || 'Dars boshlanadi';
+      $('notifyLate').checked = notifSettings.notify_late === 'true';
+    }
+  } catch (e) { console.warn('Sozlamalar yuklanmadi:', e.message); }
+}
+
+$('saveNotifSettings')?.addEventListener('click', async () => {
+  try {
+    await api('/settings', {
+      method: 'PUT',
+      body: JSON.stringify({
+        notifications_enabled: $('notifEnabled').checked ? 'true' : 'false',
+        notify_minutes_before: $('notifMinutes').value,
+        notification_sound: $('notifSound').value,
+        notification_message: $('notifMessage').value,
+        notify_late: $('notifyLate').checked ? 'true' : 'false',
+      })
+    });
+    await loadNotifSettings();
+    toast('✅ Sozlamalar saqlandi');
+  } catch (e) { toast('❌ ' + e.message, 'error'); }
+});
+
+$('testNotifBtn')?.addEventListener('click', async () => {
+  await playSound($('notifSound').value);
+  showBrowserNotification('🔔 Test', 'Bu test xabari. Hammasi ishlayapti!');
+});
+
+// ============ NOTIFICATIONS ============
+async function initNotifications() {
+  if (!('Notification' in window)) return;
+  if (Notification.permission === 'default') {
+    try { await Notification.requestPermission(); } catch {}
+  }
+}
+
+function showBrowserNotification(title, body) {
+  if (!('Notification' in window)) return;
+  if (Notification.permission !== 'granted') return;
+  try {
+    new Notification(title, {
+      body,
+      icon: '/icon.svg',
+      badge: '/icon.svg',
+      vibrate: [200, 100, 200],
+    });
+  } catch (e) {}
+}
+
+// Ovoz chiqarish (Web Audio API)
+async function playSound(type = 'bell') {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    
+    const playTone = (freq, duration, delay = 0, waveType = 'sine') => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.type = waveType;
+      osc.frequency.value = freq;
+      const startTime = ctx.currentTime + delay;
+      gain.gain.setValueAtTime(0.3, startTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
+      osc.start(startTime);
+      osc.stop(startTime + duration);
+    };
+
+    if (type === 'bell') {
+      playTone(800, 0.8, 0, 'sine');
+      playTone(1200, 0.6, 0.2, 'sine');
+    } else if (type === 'chime') {
+      playTone(600, 0.4, 0, 'triangle');
+      playTone(800, 0.4, 0.3, 'triangle');
+      playTone(1000, 0.6, 0.6, 'triangle');
+    } else if (type === 'alert') {
+      playTone(1000, 0.2, 0, 'square');
+      playTone(1000, 0.2, 0.3, 'square');
+      playTone(1000, 0.2, 0.6, 'square');
+    } else if (type === 'beep') {
+      playTone(440, 0.15, 0, 'sine');
+      playTone(440, 0.15, 0.2, 'sine');
+    }
+  } catch (e) { console.warn('Ovoz xatosi:', e); }
+}
+
+// Har daqiqada tekshiramiz
+function checkNotifications() {
+  if (!currentUser) return;
+  if (notifSettings.notifications_enabled !== 'true') return;
+
+  const now = new Date();
+  const today = getTodayName();
+  const nowMs = now.getTime();
+  const minutesBefore = parseInt(notifSettings.notify_minutes_before || '60', 10);
+  const notifyLate = notifSettings.notify_late === 'true';
+  const message = notifSettings.notification_message || 'Dars boshlanadi';
+
+  // Bugungi darslarni tekshiramiz
+  const todayLessons = lessons.filter(l => l.day === today);
+
+  todayLessons.forEach(lesson => {
+    // Dars boshlanish vaqtini hisoblaymiz
+    const [h, m] = lesson.start.split(':').map(Number);
+    const lessonDate = new Date();
+    lessonDate.setHours(h, m, 0, 0);
+    const lessonMs = lessonDate.getTime();
+
+    const diffMs = lessonMs - nowMs;
+    const diffMin = diffMs / 60000;
+
+    // Kalit — kun + dars ID (har kuni yangi)
+    const today_str = now.toISOString().slice(0, 10);
+    const key = `notified_${today_str}_${lesson.id}_${lesson.start}`;
+    if (localStorage.getItem(key)) return;
+
+    // Shart: dars N daqiqadan keyin boshlanadi YOKI yaqinda boshlandi (kechiktirilgan holat)
+    const shouldNotify = 
+      (diffMin <= minutesBefore && diffMin > 0) ||
+      (notifyLate && diffMin <= 0 && diffMin >= -1);
+
+    if (shouldNotify) {
+      const timeInfo = diffMin > 0 
+        ? `${Math.round(diffMin)} daqiqadan keyin` 
+        : 'hozir boshlanadi';
+      
+      showBrowserNotification(
+        `🔔 ${lesson.subject}`,
+        `${message} — ${lesson.start} (${timeInfo}) • ${lesson.room || ''} xona`
+      );
+      
+      playSound(notifSettings.notification_sound || 'bell');
+      localStorage.setItem(key, '1');
+    }
+  });
+
+  // Eski kalitlarni tozalash (bir haftadan eski)
+  cleanupOldNotifKeys();
+}
+
+function cleanupOldNotifKeys() {
+  const now = Date.now();
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (key && key.startsWith('notified_')) {
+      const dateStr = key.split('_')[1];
+      if (dateStr) {
+        const keyDate = new Date(dateStr).getTime();
+        if (now - keyDate > 7 * 24 * 60 * 60 * 1000) {
+          localStorage.removeItem(key);
+          i--;
+        }
+      }
+    }
+  }
+}
+
+let notifTimer = null;
+function startNotifTimer() {
+  if (notifTimer) return;
+  // Har 30 sekundda tekshiramiz
+  notifTimer = setInterval(checkNotifications, 30000);
+  // Birinchi tekshirish darhol
+  setTimeout(checkNotifications, 3000);
+}
+
+// Notif tugmasini bosganda ruxsat so'rash
+$('notifBtn')?.addEventListener('click', async () => {
+  if (!('Notification' in window)) {
+    toast('❌ Brauzer xabarnomani qo\'llab-quvvatlamaydi', 'error');
+    return;
+  }
+  if (Notification.permission === 'granted') {
+    toast('✅ Xabarnomalar yoqilgan');
+    showBrowserNotification('🔔 Test', 'Xabarnomalar ishlayapti!');
+    playSound(notifSettings.notification_sound || 'bell');
+  } else if (Notification.permission === 'denied') {
+    toast('❌ Xabarnomalar bloklangan. Brauzer sozlamalaridan yoqing', 'error');
+  } else {
+    const perm = await Notification.requestPermission();
+    if (perm === 'granted') {
+      toast('✅ Xabarnomalar yoqildi!');
+      showBrowserNotification('🔔 Tayyor', 'Endi eslatmalarni olasiz');
+    } else {
+      toast('❌ Ruxsat berilmadi', 'error');
+    }
+  }
+});
+
+// ============ BOTTOM NAV ============
 function initBottomNav() {
   document.querySelectorAll('.bottom-nav-item').forEach(btn => {
     btn.onclick = () => {
@@ -583,7 +841,6 @@ function initBottomNav() {
       const activeView = document.querySelector('.view:not(.hidden)');
       if (!activeView) return;
       const viewId = activeView.id;
-
       if (viewId === 'view-schedule') openLessonModal();
       else if (viewId === 'view-homework') $('addHwBtn')?.click();
       else if (viewId === 'view-announcements') $('addAnnBtn')?.click();
@@ -594,15 +851,9 @@ function initBottomNav() {
 function updateFabVisibility() {
   const fab = $('fabBtn');
   if (!fab) return;
-
-  if (!currentUser || currentUser.role === 'student') {
-    fab.classList.add('hidden');
-    return;
-  }
-
+  if (!currentUser || currentUser.role === 'student') { fab.classList.add('hidden'); return; }
   const activeView = document.querySelector('.view:not(.hidden)');
   if (!activeView) { fab.classList.add('hidden'); return; }
-
   const viewId = activeView.id;
   if (['view-schedule', 'view-homework', 'view-announcements'].includes(viewId)) {
     fab.classList.remove('hidden');
@@ -610,10 +861,6 @@ function updateFabVisibility() {
     fab.classList.add('hidden');
   }
 }
-
-// ============ INTERNET ============
-window.addEventListener('online', () => toast('✅ Internet qaytdi'));
-window.addEventListener('offline', () => toast('❌ Internet yo\'q', 'error'));
 
 // ============ PWA ============
 if ('serviceWorker' in navigator) {
@@ -634,13 +881,7 @@ function showInstallButton() {
   const btn = document.createElement('button');
   btn.id = 'pwaInstallBtn';
   btn.innerHTML = '📲 Ilovani o\'rnatish';
-  btn.style.cssText = `
-    position: fixed; bottom: 90px; right: 20px; padding: 14px 22px;
-    background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white;
-    border: none; border-radius: 14px; font-size: 0.95rem; font-weight: 700;
-    cursor: pointer; z-index: 9999; box-shadow: 0 10px 30px rgba(99,102,241,0.4);
-    font-family: 'Inter', sans-serif;
-  `;
+  btn.style.cssText = `position: fixed; bottom: 90px; right: 20px; padding: 14px 22px; background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; border: none; border-radius: 14px; font-size: 0.95rem; font-weight: 700; cursor: pointer; z-index: 9999; box-shadow: 0 10px 30px rgba(99,102,241,0.4); font-family: 'Inter', sans-serif;`;
   btn.onclick = async () => {
     if (!deferredPrompt) return;
     deferredPrompt.prompt();
@@ -651,16 +892,14 @@ function showInstallButton() {
   document.body.appendChild(btn);
 }
 
-window.addEventListener('appinstalled', () => {
-  document.getElementById('pwaInstallBtn')?.remove();
-  toast('📲 Ilova o\'rnatildi!');
-});
-
 // ============ INIT ============
 (async function init() {
+  initOnboarding();
+  
   if (token) {
     try {
       currentUser = await api('/auth/me');
+      $('onboarding').classList.add('hidden');
       showApp();
     } catch {
       token = null;

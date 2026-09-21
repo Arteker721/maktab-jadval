@@ -7,20 +7,18 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const PUBLIC_DIR = path.join(__dirname, '..', 'public');
 
-// Kutilmagan xato serverni yiqitmasin
 process.on('unhandledRejection', (err) => {
   console.error('⚠️ unhandledRejection:', err && err.message ? err.message : err);
 });
 
 let dbReady = false;
 
-// ============ YORDAMCHI FUNKSIYALAR ============
+// ============ YORDAMCHI ============
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const isUuid = (v) => typeof v === 'string' && UUID_RE.test(v);
 const wrap = (fn) => (req, res, next) => Promise.resolve(fn(req, res, next)).catch(next);
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
-// ============ PASSWORD ============
 function hashPassword(password, salt) {
   salt = salt || crypto.randomBytes(16).toString('hex');
   const hash = crypto.scryptSync(password, salt, 64).toString('hex');
@@ -30,20 +28,16 @@ function verifyPassword(password, salt, hash) {
   try {
     const test = crypto.scryptSync(password, salt, 64).toString('hex');
     return crypto.timingSafeEqual(Buffer.from(test, 'hex'), Buffer.from(hash, 'hex'));
-  } catch {
-    return false;
-  }
+  } catch { return false; }
 }
-function generateToken() {
-  return crypto.randomBytes(32).toString('hex');
-}
+function generateToken() { return crypto.randomBytes(32).toString('hex'); }
 async function createToken(userId) {
   const token = generateToken();
   await pool.query('INSERT INTO tokens (token, user_id) VALUES ($1, $2)', [token, userId]);
   return token;
 }
 
-// ============ JAVOB FORMATLARI (frontend eskisi bilan bir xil ko'radi) ============
+// ============ JAVOB FORMATLARI ============
 const mapUser = (r) => ({
   id: r.id, _id: r.id, name: r.name, username: r.username,
   role: r.role, class: r.class_name, createdAt: r.created_at,
@@ -65,19 +59,49 @@ const mapAnnouncement = (r) => ({
   author: r.author, authorRole: r.author_role, createdAt: r.created_at,
 });
 
-// ============ BOSHLANG'ICH MA'LUMOTLAR ============
+// ============ DEFAULT SETTINGS ============
+const DEFAULT_SETTINGS = {
+  notifications_enabled: 'true',
+  notify_minutes_before: '60',
+  notification_sound: 'bell',
+  notification_message: 'Dars boshlanadi',
+  notify_late: 'true',
+};
+
+async function getSettings() {
+  const { rows } = await pool.query('SELECT key, value FROM settings');
+  const obj = { ...DEFAULT_SETTINGS };
+  rows.forEach(r => { obj[r.key] = r.value; });
+  return obj;
+}
+
+// ============ SEED ============
 async function seedData() {
   const users = await pool.query('SELECT COUNT(*)::int AS n FROM users');
   if (users.rows[0].n === 0) {
-    const adminPass = hashPassword(process.env.ADMIN_PASSWORD || 'admin123');
-    const teacherPass = hashPassword(process.env.TEACHER_PASSWORD || 'teacher123');
+    const adminPass = hashPassword('Maktab2026!');
+    const teacherPass = hashPassword('teacher123');
     await pool.query(
       `INSERT INTO users (name, username, role, class_name, salt, hash) VALUES
        ($1, 'admin', 'admin', NULL, $2, $3),
        ($4, 'teacher', 'teacher', NULL, $5, $6)`,
       ['Administrator', adminPass.salt, adminPass.hash, 'Karimova N.', teacherPass.salt, teacherPass.hash]
     );
-    console.log('👤 Admin va Teacher yaratildi');
+    console.log('👤 Admin (Maktab2026!) va Teacher yaratildi');
+  } else {
+    // Eski admin123 paroli bo'lsa — yangilaymiz
+    const admin = await pool.query("SELECT * FROM users WHERE username = 'admin'");
+    if (admin.rows.length) {
+      const row = admin.rows[0];
+      if (verifyPassword('admin123', row.salt, row.hash)) {
+        const newPass = hashPassword('Maktab2026!');
+        await pool.query(
+          'UPDATE users SET salt = $1, hash = $2 WHERE username = $3',
+          [newPass.salt, newPass.hash, 'admin']
+        );
+        console.log('🔐 Admin paroli yangilandi: Maktab2026!');
+      }
+    }
   }
 
   const subjects = await pool.query('SELECT COUNT(*)::int AS n FROM subjects');
@@ -93,30 +117,6 @@ async function seedData() {
     }
     console.log('📚 Fanlar yaratildi');
   }
-
-  const lessons = await pool.query('SELECT COUNT(*)::int AS n FROM lessons');
-  if (lessons.rows[0].n === 0) {
-    const list = [
-      ['Dushanba', '08:00', '08:45', 'Matematika', 'Karimova N.', '7-A', '204'],
-      ['Dushanba', '09:00', '09:45', 'Ingliz tili', 'Aliyev S.', '7-A', '105'],
-      ['Dushanba', '10:00', '10:45', 'Fizika', 'Rahimov B.', '7-A', '301'],
-      ['Seshanba', '08:00', '08:45', 'Kimyo', 'Yusupova D.', '7-A', '202'],
-      ['Seshanba', '09:00', '09:45', 'Matematika', 'Karimova N.', '7-A', '204'],
-      ['Chorshanba', '08:00', '08:45', 'Biologiya', 'Nazarova G.', '7-A', '203'],
-      ['Chorshanba', '09:00', '09:45', 'Informatika', 'Qodirov J.', '7-A', '401'],
-      ['Payshanba', '08:00', '08:45', 'Geografiya', 'Islomov T.', '7-A', '107'],
-      ['Payshanba', '09:00', '09:45', 'Fizika', 'Rahimov B.', '7-A', '301'],
-      ['Juma', '08:00', '08:45', 'Matematika', 'Karimova N.', '7-A', '204'],
-      ['Juma', '09:00', '09:45', 'Jismoniy tarbiya', 'Azimov K.', '7-A', 'Sport zali'],
-    ];
-    for (const l of list) {
-      await pool.query(
-        `INSERT INTO lessons (day, start_time, end_time, subject, teacher, class_name, room)
-         VALUES ($1, $2, $3, $4, $5, $6, $7)`, l
-      );
-    }
-    console.log("📅 Boshlang'ich darslar yaratildi");
-  }
 }
 
 // ============ MIDDLEWARE ============
@@ -126,9 +126,7 @@ app.use(express.static(PUBLIC_DIR));
 app.get('/api/health', (req, res) => res.json({ ok: true, db: dbReady }));
 
 app.use('/api', (req, res, next) => {
-  if (!dbReady) {
-    return res.status(503).json({ error: 'Baza hali ulanmagan, biroz kutib qayta urinib ko\'ring' });
-  }
+  if (!dbReady) return res.status(503).json({ error: 'Baza hali ulanmagan' });
   next();
 });
 
@@ -136,13 +134,11 @@ app.use('/api', (req, res, next) => {
 const auth = wrap(async (req, res, next) => {
   const token = (req.headers.authorization || '').replace('Bearer ', '').trim();
   if (!token) return res.status(401).json({ error: 'Token kerak' });
-
   const { rows } = await pool.query(
     'SELECT u.* FROM tokens t JOIN users u ON u.id = t.user_id WHERE t.token = $1',
     [token]
   );
   if (!rows.length) return res.status(401).json({ error: 'Token yaroqsiz' });
-
   req.user = rows[0];
   req.token = token;
   next();
@@ -150,9 +146,7 @@ const auth = wrap(async (req, res, next) => {
 
 function requireRole(...roles) {
   return (req, res, next) => {
-    if (!roles.includes(req.user.role)) {
-      return res.status(403).json({ error: "Ruxsat yo'q" });
-    }
+    if (!roles.includes(req.user.role)) return res.status(403).json({ error: "Ruxsat yo'q" });
     next();
   };
 }
@@ -167,7 +161,6 @@ app.post('/api/auth/register', wrap(async (req, res) => {
   const exists = await pool.query('SELECT 1 FROM users WHERE username = $1', [uname]);
   if (exists.rowCount) return res.status(400).json({ error: 'Bu username band' });
 
-  // Xavfsizlik: ro'yxatdan o'tganda o'zini admin qila olmaydi
   const safeRole = role === 'teacher' ? 'teacher' : 'student';
   const { salt, hash } = hashPassword(String(password));
 
@@ -202,6 +195,27 @@ app.post('/api/auth/logout', auth, wrap(async (req, res) => {
 
 app.get('/api/auth/me', auth, (req, res) => res.json(mapUser(req.user)));
 
+// ============ SETTINGS ============
+app.get('/api/settings', auth, wrap(async (req, res) => {
+  const settings = await getSettings();
+  res.json(settings);
+}));
+
+app.put('/api/settings', auth, requireRole('admin'), wrap(async (req, res) => {
+  const allowed = Object.keys(DEFAULT_SETTINGS);
+  for (const key of allowed) {
+    if (req.body && req.body[key] !== undefined) {
+      await pool.query(
+        `INSERT INTO settings (key, value) VALUES ($1, $2)
+         ON CONFLICT (key) DO UPDATE SET value = $2, updated_at = now()`,
+        [key, String(req.body[key])]
+      );
+    }
+  }
+  const settings = await getSettings();
+  res.json(settings);
+}));
+
 // ============ LESSONS ============
 app.get('/api/lessons', auth, wrap(async (req, res) => {
   let result;
@@ -234,20 +248,18 @@ const LESSON_FIELDS = {
 app.put('/api/lessons/:id', auth, requireRole('admin', 'teacher'), wrap(async (req, res) => {
   if (!isUuid(req.params.id)) return res.status(404).json({ error: 'Dars topilmadi' });
 
-  const sets = [];
-  const vals = [];
+  const sets = []; const vals = [];
   for (const [key, col] of Object.entries(LESSON_FIELDS)) {
     if (req.body && req.body[key] !== undefined) {
       vals.push(req.body[key]);
       sets.push(`${col} = $${vals.length}`);
     }
   }
-  if (!sets.length) return res.status(400).json({ error: "Yangilash uchun maydon yo'q" });
+  if (!sets.length) return res.status(400).json({ error: "Maydon yo'q" });
 
   vals.push(req.params.id);
   const { rows } = await pool.query(
-    `UPDATE lessons SET ${sets.join(', ')} WHERE id = $${vals.length} RETURNING *`,
-    vals
+    `UPDATE lessons SET ${sets.join(', ')} WHERE id = $${vals.length} RETURNING *`, vals
   );
   if (!rows.length) return res.status(404).json({ error: 'Dars topilmadi' });
   res.json(mapLesson(rows[0]));
@@ -338,10 +350,8 @@ app.post('/api/favorites/toggle', auth, wrap(async (req, res) => {
   const { lessonId } = req.body || {};
   if (!lessonId) return res.status(400).json({ error: 'lessonId kerak' });
   if (!isUuid(lessonId)) return res.status(404).json({ error: 'Dars topilmadi' });
-
   const del = await pool.query('DELETE FROM favorites WHERE user_id = $1 AND lesson_id = $2', [req.user.id, lessonId]);
   if (del.rowCount) return res.json({ favorited: false });
-
   try {
     await pool.query('INSERT INTO favorites (user_id, lesson_id) VALUES ($1, $2) ON CONFLICT DO NOTHING', [req.user.id, lessonId]);
   } catch (err) {
@@ -379,35 +389,30 @@ app.get('/api/users', auth, requireRole('admin'), wrap(async (req, res) => {
 }));
 
 app.delete('/api/users/:id', auth, requireRole('admin'), wrap(async (req, res) => {
-  if (req.params.id === req.user.id) {
-    return res.status(400).json({ error: "O'zingizni o'chira olmaysiz" });
-  }
+  if (req.params.id === req.user.id) return res.status(400).json({ error: "O'zingizni o'chira olmaysiz" });
   if (isUuid(req.params.id)) await pool.query('DELETE FROM users WHERE id = $1', [req.params.id]);
   res.json({ ok: true });
 }));
 
-// ============ 404 (API) VA SPA FALLBACK ============
+// ============ 404 va SPA ============
 app.use('/api', (req, res) => res.status(404).json({ error: 'Topilmadi' }));
 
 app.get('*', (req, res) => {
   res.sendFile(path.join(PUBLIC_DIR, 'index.html'));
 });
 
-// ============ ERROR HANDLER ============
 app.use((err, req, res, next) => {
   console.error('Server error:', err);
   res.status(500).json({ error: 'Server xatosi' });
 });
 
 // ============ START ============
-// Serverni darhol ishga tushiramiz, bazaga orqa fonda ulanamiz
 app.listen(PORT, () => {
   console.log('');
   console.log('╔════════════════════════════════════════╗');
   console.log('║   ✅ SERVER ISHGA TUSHDI               ║');
   console.log(`║   🌐 Port: ${PORT}`.padEnd(41) + '║');
   console.log('╚════════════════════════════════════════╝');
-  console.log('');
 });
 
 (async () => {
@@ -424,5 +429,5 @@ app.listen(PORT, () => {
       if (i < attempts) await sleep(5000);
     }
   }
-  console.error("❌ Bazaga ulanib bo'lmadi. DATABASE_URL ni tekshiring.");
+  console.error("❌ Bazaga ulanib bo'lmadi.");
 })();
