@@ -18,15 +18,7 @@
     }
   ],
   "shortcuts": [
-    {
-      "name": "Jadval",
-      "url": "/",
-      "description": "Dars jadvalini ko'rish"
-    },
-    {
-      "name": "Uy vazifasi",
-      "url": "/?tab=homework",
-      "description": "Uy vazifalarini ko'rish"
-    }
+    { "name": "Jadval", "url": "/", "description": "Dars jadvalini ko'rish" },
+    { "name": "Uy vazifasi", "url": "/?tab=homework", "description": "Uy vazifalarini ko'rish" }
   ]
 }

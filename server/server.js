@@ -13,7 +13,6 @@ process.on('unhandledRejection', (err) => {
 
 let dbReady = false;
 
-// ============ YORDAMCHI ============
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const isUuid = (v) => typeof v === 'string' && UUID_RE.test(v);
 const wrap = (fn) => (req, res, next) => Promise.resolve(fn(req, res, next)).catch(next);
@@ -37,29 +36,14 @@ async function createToken(userId) {
   return token;
 }
 
-// ============ JAVOB FORMATLARI ============
-const mapUser = (r) => ({
-  id: r.id, _id: r.id, name: r.name, username: r.username,
-  role: r.role, class: r.class_name, createdAt: r.created_at,
-});
-const mapLesson = (r) => ({
-  id: r.id, _id: r.id, day: r.day, start: r.start_time, end: r.end_time,
-  subject: r.subject, teacher: r.teacher, class: r.class_name, room: r.room,
-  createdBy: r.created_by, createdAt: r.created_at,
-});
+const mapUser = (r) => ({ id: r.id, _id: r.id, name: r.name, username: r.username, role: r.role, class: r.class_name, createdAt: r.created_at });
+const mapLesson = (r) => ({ id: r.id, _id: r.id, day: r.day, start: r.start_time, end: r.end_time, subject: r.subject, teacher: r.teacher, class: r.class_name, room: r.room, createdBy: r.created_by, createdAt: r.created_at });
 const mapSubject = (r) => ({ id: r.id, _id: r.id, name: r.name, color: r.color, createdAt: r.created_at });
-const mapHomework = (r) => ({
-  id: r.id, _id: r.id, subject: r.subject, class: r.class_name, text: r.body,
-  dueDate: r.due_date, author: r.author, createdBy: r.created_by, createdAt: r.created_at,
-});
+const mapHomework = (r) => ({ id: r.id, _id: r.id, subject: r.subject, class: r.class_name, text: r.body, dueDate: r.due_date, author: r.author, createdBy: r.created_by, createdAt: r.created_at });
 const mapNote = (r) => ({ id: r.id, _id: r.id, userId: r.user_id, text: r.body, createdAt: r.created_at });
 const mapFavorite = (r) => ({ id: r.id, _id: r.id, userId: r.user_id, lessonId: r.lesson_id, createdAt: r.created_at });
-const mapAnnouncement = (r) => ({
-  id: r.id, _id: r.id, title: r.title, text: r.body,
-  author: r.author, authorRole: r.author_role, createdAt: r.created_at,
-});
+const mapAnnouncement = (r) => ({ id: r.id, _id: r.id, title: r.title, text: r.body, author: r.author, authorRole: r.author_role, createdAt: r.created_at });
 
-// ============ DEFAULT SETTINGS ============
 const DEFAULT_SETTINGS = {
   notifications_enabled: 'true',
   notify_minutes_before: '60',
@@ -75,7 +59,6 @@ async function getSettings() {
   return obj;
 }
 
-// ============ SEED ============
 async function seedData() {
   const users = await pool.query('SELECT COUNT(*)::int AS n FROM users');
   if (users.rows[0].n === 0) {
@@ -89,21 +72,16 @@ async function seedData() {
     );
     console.log('👤 Admin (Maktab2026!) va Teacher yaratildi');
   } else {
-    // Eski admin123 paroli bo'lsa — yangilaymiz
     const admin = await pool.query("SELECT * FROM users WHERE username = 'admin'");
     if (admin.rows.length) {
       const row = admin.rows[0];
       if (verifyPassword('admin123', row.salt, row.hash)) {
         const newPass = hashPassword('Maktab2026!');
-        await pool.query(
-          'UPDATE users SET salt = $1, hash = $2 WHERE username = $3',
-          [newPass.salt, newPass.hash, 'admin']
-        );
+        await pool.query('UPDATE users SET salt = $1, hash = $2 WHERE username = $3', [newPass.salt, newPass.hash, 'admin']);
         console.log('🔐 Admin paroli yangilandi: Maktab2026!');
       }
     }
   }
-
   const subjects = await pool.query('SELECT COUNT(*)::int AS n FROM subjects');
   if (subjects.rows[0].n === 0) {
     const list = [
@@ -119,7 +97,6 @@ async function seedData() {
   }
 }
 
-// ============ MIDDLEWARE ============
 app.use(express.json({ limit: '10mb' }));
 app.use(express.static(PUBLIC_DIR));
 
@@ -130,14 +107,10 @@ app.use('/api', (req, res, next) => {
   next();
 });
 
-// ============ AUTH ============
 const auth = wrap(async (req, res, next) => {
   const token = (req.headers.authorization || '').replace('Bearer ', '').trim();
   if (!token) return res.status(401).json({ error: 'Token kerak' });
-  const { rows } = await pool.query(
-    'SELECT u.* FROM tokens t JOIN users u ON u.id = t.user_id WHERE t.token = $1',
-    [token]
-  );
+  const { rows } = await pool.query('SELECT u.* FROM tokens t JOIN users u ON u.id = t.user_id WHERE t.token = $1', [token]);
   if (!rows.length) return res.status(401).json({ error: 'Token yaroqsiz' });
   req.user = rows[0];
   req.token = token;
@@ -151,22 +124,17 @@ function requireRole(...roles) {
   };
 }
 
-// ============ AUTH ROUTES ============
 app.post('/api/auth/register', wrap(async (req, res) => {
   const { name, username, password, role, class: cls } = req.body || {};
   if (!name || !username || !password) return res.status(400).json({ error: 'Barcha maydonlar kerak' });
   if (String(password).length < 4) return res.status(400).json({ error: 'Parol kamida 4 belgi' });
-
   const uname = String(username).trim().toLowerCase();
   const exists = await pool.query('SELECT 1 FROM users WHERE username = $1', [uname]);
   if (exists.rowCount) return res.status(400).json({ error: 'Bu username band' });
-
   const safeRole = role === 'teacher' ? 'teacher' : 'student';
   const { salt, hash } = hashPassword(String(password));
-
   const { rows } = await pool.query(
-    `INSERT INTO users (name, username, role, class_name, salt, hash)
-     VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
+    `INSERT INTO users (name, username, role, class_name, salt, hash) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
     [String(name).trim(), uname, safeRole, cls || null, salt, hash]
   );
   const token = await createToken(rows[0].id);
@@ -176,10 +144,7 @@ app.post('/api/auth/register', wrap(async (req, res) => {
 app.post('/api/auth/login', wrap(async (req, res) => {
   const { username, password } = req.body || {};
   if (!username || !password) return res.status(400).json({ error: 'Username va parol kerak' });
-
-  const { rows } = await pool.query('SELECT * FROM users WHERE username = $1', [
-    String(username).trim().toLowerCase(),
-  ]);
+  const { rows } = await pool.query('SELECT * FROM users WHERE username = $1', [String(username).trim().toLowerCase()]);
   const user = rows[0];
   if (!user || !verifyPassword(String(password), user.salt, user.hash)) {
     return res.status(401).json({ error: 'Username yoki parol xato' });
@@ -195,10 +160,8 @@ app.post('/api/auth/logout', auth, wrap(async (req, res) => {
 
 app.get('/api/auth/me', auth, (req, res) => res.json(mapUser(req.user)));
 
-// ============ SETTINGS ============
 app.get('/api/settings', auth, wrap(async (req, res) => {
-  const settings = await getSettings();
-  res.json(settings);
+  res.json(await getSettings());
 }));
 
 app.put('/api/settings', auth, requireRole('admin'), wrap(async (req, res) => {
@@ -206,17 +169,14 @@ app.put('/api/settings', auth, requireRole('admin'), wrap(async (req, res) => {
   for (const key of allowed) {
     if (req.body && req.body[key] !== undefined) {
       await pool.query(
-        `INSERT INTO settings (key, value) VALUES ($1, $2)
-         ON CONFLICT (key) DO UPDATE SET value = $2, updated_at = now()`,
+        `INSERT INTO settings (key, value) VALUES ($1, $2) ON CONFLICT (key) DO UPDATE SET value = $2, updated_at = now()`,
         [key, String(req.body[key])]
       );
     }
   }
-  const settings = await getSettings();
-  res.json(settings);
+  res.json(await getSettings());
 }));
 
-// ============ LESSONS ============
 app.get('/api/lessons', auth, wrap(async (req, res) => {
   let result;
   if (req.user.role === 'student' && req.user.class_name) {
@@ -231,23 +191,17 @@ app.post('/api/lessons', auth, requireRole('admin', 'teacher'), wrap(async (req,
   const { day, start, end, subject, teacher, class: cls, room } = req.body || {};
   if (!day || !start || !end || !subject || !cls) return res.status(400).json({ error: 'Majburiy maydonlar' });
   if (start >= end) return res.status(400).json({ error: "Vaqt noto'g'ri" });
-
   const { rows } = await pool.query(
-    `INSERT INTO lessons (day, start_time, end_time, subject, teacher, class_name, room, created_by)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *`,
+    `INSERT INTO lessons (day, start_time, end_time, subject, teacher, class_name, room, created_by) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *`,
     [day, start, end, subject, teacher || req.user.name, cls, room || '', req.user.id]
   );
   res.json(mapLesson(rows[0]));
 }));
 
-const LESSON_FIELDS = {
-  day: 'day', start: 'start_time', end: 'end_time', subject: 'subject',
-  teacher: 'teacher', class: 'class_name', room: 'room',
-};
+const LESSON_FIELDS = { day: 'day', start: 'start_time', end: 'end_time', subject: 'subject', teacher: 'teacher', class: 'class_name', room: 'room' };
 
 app.put('/api/lessons/:id', auth, requireRole('admin', 'teacher'), wrap(async (req, res) => {
   if (!isUuid(req.params.id)) return res.status(404).json({ error: 'Dars topilmadi' });
-
   const sets = []; const vals = [];
   for (const [key, col] of Object.entries(LESSON_FIELDS)) {
     if (req.body && req.body[key] !== undefined) {
@@ -256,11 +210,8 @@ app.put('/api/lessons/:id', auth, requireRole('admin', 'teacher'), wrap(async (r
     }
   }
   if (!sets.length) return res.status(400).json({ error: "Maydon yo'q" });
-
   vals.push(req.params.id);
-  const { rows } = await pool.query(
-    `UPDATE lessons SET ${sets.join(', ')} WHERE id = $${vals.length} RETURNING *`, vals
-  );
+  const { rows } = await pool.query(`UPDATE lessons SET ${sets.join(', ')} WHERE id = $${vals.length} RETURNING *`, vals);
   if (!rows.length) return res.status(404).json({ error: 'Dars topilmadi' });
   res.json(mapLesson(rows[0]));
 }));
@@ -272,7 +223,6 @@ app.delete('/api/lessons/:id', auth, requireRole('admin', 'teacher'), wrap(async
   res.json({ ok: true });
 }));
 
-// ============ SUBJECTS ============
 app.get('/api/subjects', auth, wrap(async (req, res) => {
   const { rows } = await pool.query('SELECT * FROM subjects ORDER BY created_at');
   res.json(rows.map(mapSubject));
@@ -281,10 +231,7 @@ app.get('/api/subjects', auth, wrap(async (req, res) => {
 app.post('/api/subjects', auth, requireRole('admin'), wrap(async (req, res) => {
   const { name, color } = req.body || {};
   if (!name) return res.status(400).json({ error: 'Fan nomi kerak' });
-  const { rows } = await pool.query(
-    'INSERT INTO subjects (name, color) VALUES ($1, $2) RETURNING *',
-    [name, color || '#6366f1']
-  );
+  const { rows } = await pool.query('INSERT INTO subjects (name, color) VALUES ($1, $2) RETURNING *', [name, color || '#6366f1']);
   res.json(mapSubject(rows[0]));
 }));
 
@@ -293,7 +240,6 @@ app.delete('/api/subjects/:id', auth, requireRole('admin'), wrap(async (req, res
   res.json({ ok: true });
 }));
 
-// ============ HOMEWORK ============
 app.get('/api/homework', auth, wrap(async (req, res) => {
   let result;
   if (req.user.role === 'student' && req.user.class_name) {
@@ -308,8 +254,7 @@ app.post('/api/homework', auth, requireRole('admin', 'teacher'), wrap(async (req
   const { subject, class: cls, text, dueDate } = req.body || {};
   if (!subject || !cls || !text) return res.status(400).json({ error: 'Maydonlar kerak' });
   const { rows } = await pool.query(
-    `INSERT INTO homework (subject, class_name, body, due_date, author, created_by)
-     VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
+    `INSERT INTO homework (subject, class_name, body, due_date, author, created_by) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
     [subject, cls, text, dueDate || null, req.user.name, req.user.id]
   );
   res.json(mapHomework(rows[0]));
@@ -320,7 +265,6 @@ app.delete('/api/homework/:id', auth, requireRole('admin', 'teacher'), wrap(asyn
   res.json({ ok: true });
 }));
 
-// ============ NOTES ============
 app.get('/api/notes', auth, wrap(async (req, res) => {
   const { rows } = await pool.query('SELECT * FROM notes WHERE user_id = $1 ORDER BY created_at DESC', [req.user.id]);
   res.json(rows.map(mapNote));
@@ -340,7 +284,6 @@ app.delete('/api/notes/:id', auth, wrap(async (req, res) => {
   res.json({ ok: true });
 }));
 
-// ============ FAVORITES ============
 app.get('/api/favorites', auth, wrap(async (req, res) => {
   const { rows } = await pool.query('SELECT * FROM favorites WHERE user_id = $1', [req.user.id]);
   res.json(rows.map(mapFavorite));
@@ -361,7 +304,6 @@ app.post('/api/favorites/toggle', auth, wrap(async (req, res) => {
   res.json({ favorited: true });
 }));
 
-// ============ ANNOUNCEMENTS ============
 app.get('/api/announcements', auth, wrap(async (req, res) => {
   const { rows } = await pool.query('SELECT * FROM announcements ORDER BY created_at DESC');
   res.json(rows.map(mapAnnouncement));
@@ -382,7 +324,6 @@ app.delete('/api/announcements/:id', auth, requireRole('admin', 'teacher'), wrap
   res.json({ ok: true });
 }));
 
-// ============ ADMIN: USERS ============
 app.get('/api/users', auth, requireRole('admin'), wrap(async (req, res) => {
   const { rows } = await pool.query('SELECT * FROM users ORDER BY created_at');
   res.json(rows.map(mapUser));
@@ -394,7 +335,6 @@ app.delete('/api/users/:id', auth, requireRole('admin'), wrap(async (req, res) =
   res.json({ ok: true });
 }));
 
-// ============ 404 va SPA ============
 app.use('/api', (req, res) => res.status(404).json({ error: 'Topilmadi' }));
 
 app.get('*', (req, res) => {
@@ -406,7 +346,6 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: 'Server xatosi' });
 });
 
-// ============ START ============
 app.listen(PORT, () => {
   console.log('');
   console.log('╔════════════════════════════════════════╗');

@@ -1,4 +1,3 @@
-// ============ API ============
 const API = '/api';
 let token = localStorage.getItem('token');
 let currentUser = null;
@@ -21,7 +20,6 @@ async function api(path, opts = {}) {
   return data;
 }
 
-// ============ HELPERS ============
 function $(id) { return document.getElementById(id); }
 
 function toast(msg, type = 'info') {
@@ -43,14 +41,38 @@ function getTodayName() {
   return map[new Date().getDay()] || 'Dushanba';
 }
 
-// ============ ONBOARDING ============
+/* ============ SAYT ICHIDAGI BILDIRISHNOMA ============ */
+function showInAppNotification(title, body, duration = 8000) {
+  const existing = document.getElementById('inAppNotif');
+  if (existing) existing.remove();
+  const notif = document.createElement('div');
+  notif.id = 'inAppNotif';
+  notif.className = 'in-app-notif';
+  notif.innerHTML = `
+    <div class="in-app-notif-icon">🔔</div>
+    <div class="in-app-notif-body">
+      <div class="in-app-notif-title">${escapeHtml(title)}</div>
+      <div class="in-app-notif-text">${escapeHtml(body)}</div>
+    </div>
+    <button class="in-app-notif-close">✕</button>
+  `;
+  document.body.appendChild(notif);
+  requestAnimationFrame(() => setTimeout(() => notif.classList.add('show'), 20));
+  const close = () => {
+    notif.classList.remove('show');
+    setTimeout(() => notif.remove(), 400);
+  };
+  notif.querySelector('.in-app-notif-close').onclick = close;
+  setTimeout(() => { if (document.body.contains(notif)) close(); }, duration);
+}
+
+/* ============ ONBOARDING ============ */
 let currentSlide = 0;
 
 function initOnboarding() {
   const seen = localStorage.getItem('onboarding_seen');
   const onboarding = $('onboarding');
   const loginScreen = $('loginScreen');
-
   if (!seen) {
     onboarding.classList.remove('hidden');
     loginScreen.classList.add('hidden');
@@ -58,7 +80,6 @@ function initOnboarding() {
     onboarding.classList.add('hidden');
     loginScreen.classList.remove('hidden');
   }
-
   const slides = document.querySelectorAll('.onboarding-slide');
   const dots = document.querySelectorAll('.onboarding-dots .dot');
   const nextBtn = $('onboardingNext');
@@ -69,16 +90,10 @@ function initOnboarding() {
     dots.forEach((d, i) => d.classList.toggle('active', i === n));
     nextBtn.textContent = n === slides.length - 1 ? 'Boshlash 🚀' : 'Keyingisi →';
   }
-
   nextBtn.onclick = () => {
-    if (currentSlide < slides.length - 1) {
-      currentSlide++;
-      showSlide(currentSlide);
-    } else {
-      finishOnboarding();
-    }
+    if (currentSlide < slides.length - 1) { currentSlide++; showSlide(currentSlide); }
+    else finishOnboarding();
   };
-
   skipBtn.onclick = finishOnboarding;
 }
 
@@ -92,14 +107,13 @@ function finishOnboarding() {
   $('onboardingNext').textContent = 'Keyingisi →';
 }
 
-// ============ AUTH ============
-// Eslab qolish
+/* ============ AUTH ============ */
 const savedUsername = localStorage.getItem('saved_username');
 if (savedUsername) {
-  const loginInput = $('loginUsername');
-  if (loginInput) loginInput.value = savedUsername;
-  const remember = $('rememberMe');
-  if (remember) remember.checked = true;
+  const li = $('loginUsername');
+  if (li) li.value = savedUsername;
+  const rm = $('rememberMe');
+  if (rm) rm.checked = true;
 }
 
 $('loginForm').addEventListener('submit', async (e) => {
@@ -107,22 +121,16 @@ $('loginForm').addEventListener('submit', async (e) => {
   try {
     const data = await api('/auth/login', {
       method: 'POST',
-      body: JSON.stringify({
-        username: $('loginUsername').value,
-        password: $('loginPassword').value
-      })
+      body: JSON.stringify({ username: $('loginUsername').value, password: $('loginPassword').value })
     });
     token = data.token;
     currentUser = data.user;
     localStorage.setItem('token', token);
-
-    // Eslab qolish
     if ($('rememberMe') && $('rememberMe').checked) {
       localStorage.setItem('saved_username', data.user.username);
     } else {
       localStorage.removeItem('saved_username');
     }
-
     showApp();
     toast('✅ Xush kelibsiz, ' + currentUser.name);
   } catch (e) { toast('❌ ' + e.message, 'error'); }
@@ -172,7 +180,6 @@ $('logoutBtn').addEventListener('click', async () => {
   location.reload();
 });
 
-// ============ TABS ============
 document.querySelectorAll('.tab').forEach(tab => {
   tab.addEventListener('click', () => {
     document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
@@ -180,14 +187,11 @@ document.querySelectorAll('.tab').forEach(tab => {
     document.querySelectorAll('.view').forEach(v => v.classList.add('hidden'));
     const view = tab.dataset.view;
     $('view-' + view).classList.remove('hidden');
-
     document.querySelectorAll('.bottom-nav-item').forEach(btn => {
       if (btn.dataset.view === view) btn.classList.add('active');
       else btn.classList.remove('active');
     });
-
     updateFabVisibility();
-
     if (view === 'homework') loadHomework();
     if (view === 'notes') loadNotes();
     if (view === 'announcements') loadAnnouncements();
@@ -195,19 +199,16 @@ document.querySelectorAll('.tab').forEach(tab => {
   });
 });
 
-// ============ DARK MODE ============
 if (localStorage.getItem('dark') === '1') document.body.classList.add('dark');
 $('darkModeBtn').addEventListener('click', () => {
   document.body.classList.toggle('dark');
   localStorage.setItem('dark', document.body.classList.contains('dark') ? '1' : '0');
 });
 
-// ============ APP LOAD ============
 async function showApp() {
   $('loginScreen').classList.add('hidden');
   $('app').classList.remove('hidden');
   $('userInfo').textContent = `👤 ${currentUser.name} • ${currentUser.role === 'admin' ? 'Admin' : currentUser.role === 'teacher' ? 'O\'qituvchi' : 'O\'quvchi'}${currentUser.class ? ' • ' + currentUser.class : ''}`;
-
   if (currentUser.role === 'admin' || currentUser.role === 'teacher') {
     $('addLessonBtn').classList.remove('hidden');
     $('addHwBtn').classList.remove('hidden');
@@ -217,14 +218,11 @@ async function showApp() {
   if (currentUser.role === 'admin') {
     document.querySelector('.tab[data-view="admin"]').classList.remove('hidden');
   }
-
   $('bottomNav')?.classList.remove('hidden');
   $('fabBtn')?.classList.remove('hidden');
-
   initBottomNav();
   initDaySelector();
   updateFabVisibility();
-
   await loadAll();
   await loadNotifSettings();
   initNotifications();
@@ -236,12 +234,10 @@ async function loadAll() {
   renderSchedule();
   renderDayView();
 }
-
 async function loadSubjects() { try { subjects = await api('/subjects'); } catch {} }
 async function loadLessons() { try { lessons = await api('/lessons'); } catch {} }
 async function loadFavorites() { try { favorites = await api('/favorites'); } catch {} }
 
-// ============ SCHEDULE ============
 const days = ['Dushanba', 'Seshanba', 'Chorshanba', 'Payshanba', 'Juma', 'Shanba', 'Yakshanba'];
 const timeSlots = ['08:00', '09:00', '10:00', '11:00', '12:00', '13:00'];
 
@@ -259,23 +255,19 @@ function renderSchedule() {
   const today = getTodayName();
   const now = new Date();
   const curTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-
   timeSlots.forEach(slot => {
     const row = document.createElement('tr');
     const timeCell = document.createElement('td');
     timeCell.className = 'time-cell';
     timeCell.textContent = slot;
     row.appendChild(timeCell);
-
     days.forEach(day => {
       const cell = document.createElement('td');
       if (dayFilter !== 'all' && dayFilter !== day) { row.appendChild(cell); return; }
-
       const found = lessons.filter(l =>
         l.day === day && l.start === slot &&
         (search === '' || l.subject.toLowerCase().includes(search) || (l.teacher || '').toLowerCase().includes(search))
       );
-
       found.forEach(lesson => {
         const isCurrent = day === today && lesson.start <= curTime && lesson.end >= curTime;
         const color = getSubjectColor(lesson.subject);
@@ -296,58 +288,43 @@ function renderSchedule() {
         div.querySelector('.delete-btn').addEventListener('click', e => { e.stopPropagation(); deleteLesson(lesson.id); });
         cell.appendChild(div);
       });
-
       row.appendChild(cell);
     });
     tbody.appendChild(row);
   });
 }
 
-// ============ KUNLIK ============
 function renderDayView() {
   const container = $('dayLessons');
   const headerDate = $('dayHeaderDate');
   const headerCount = $('dayHeaderCount');
   if (!container) return;
-
   const today = getTodayName();
   const day = selectedDay || today;
-
   if (headerDate) headerDate.textContent = day === today ? `Bugun — ${day}` : day;
-
   document.querySelectorAll('.day-tab').forEach(tab => {
     tab.classList.toggle('active', tab.dataset.day === day);
   });
-
-  const dayLessons = lessons
-    .filter(l => l.day === day)
-    .sort((a, b) => a.start.localeCompare(b.start));
-
+  const dayLessons = lessons.filter(l => l.day === day).sort((a, b) => a.start.localeCompare(b.start));
   if (headerCount) headerCount.textContent = dayLessons.length === 0 ? "Dars yo'q" : `${dayLessons.length} ta dars`;
-
   if (dayLessons.length === 0) {
     container.innerHTML = `
       <div class="day-empty">
         <div class="day-empty-icon">🏖️</div>
         <div class="day-empty-text">Bu kunda darslar yo'q</div>
         <div style="font-size:0.8rem; margin-top:8px; opacity:0.7;">Dam oling! 😊</div>
-      </div>
-    `;
+      </div>`;
     return;
   }
-
   const now = new Date();
   const curTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
   const isToday = day === today;
-
   container.innerHTML = dayLessons.map((lesson, i) => {
     const color = getSubjectColor(lesson.subject);
     const isCurrent = isToday && lesson.start <= curTime && lesson.end >= curTime;
     const isFav = favorites.some(f => f.lessonId === lesson.id);
-
     return `
-      <div class="day-lesson-card ${isCurrent ? 'current' : ''}"
-           style="border-left-color: ${color}; animation-delay: ${i * 0.05}s">
+      <div class="day-lesson-card ${isCurrent ? 'current' : ''}" style="border-left-color: ${color}; animation-delay: ${i * 0.05}s">
         <div class="day-lesson-num">${i + 1}</div>
         <div class="day-lesson-body">
           <div class="day-lesson-subject">${isCurrent ? '🔴 ' : ''}${isFav ? '⭐ ' : ''}${escapeHtml(lesson.subject)}</div>
@@ -361,12 +338,9 @@ function renderDayView() {
           <div class="day-lesson-actions">
             <button class="edit-btn" data-edit="${lesson.id}">✏️</button>
             <button class="delete-btn" data-del="${lesson.id}">🗑️</button>
-          </div>
-        ` : ''}
-      </div>
-    `;
+          </div>` : ''}
+      </div>`;
   }).join('');
-
   container.querySelectorAll('[data-edit]').forEach(btn => {
     btn.onclick = (e) => {
       e.stopPropagation();
@@ -392,7 +366,6 @@ function initDaySelector() {
 $('searchInput').addEventListener('input', renderSchedule);
 $('dayFilter').addEventListener('change', renderSchedule);
 
-// ============ MODAL ============
 function openModal(title, formHtml, onSubmit) {
   $('modalTitle').textContent = title;
   $('modalForm').innerHTML = formHtml;
@@ -402,7 +375,6 @@ function openModal(title, formHtml, onSubmit) {
 function closeModal() { $('modal').classList.add('hidden'); }
 $('closeModal').addEventListener('click', closeModal);
 $('modal').addEventListener('click', e => { if (e.target === $('modal')) closeModal(); });
-
 $('addLessonBtn').addEventListener('click', () => openLessonModal());
 
 function openLessonModal(lesson = null) {
@@ -427,8 +399,7 @@ function openLessonModal(lesson = null) {
     <div class="modal-actions">
       <button type="button" class="btn-secondary" onclick="document.getElementById('closeModal').click()">Bekor</button>
       <button type="submit" class="btn-primary">${editing ? 'Saqlash' : 'Qo\'shish'}</button>
-    </div>
-  `;
+    </div>`;
   openModal(editing ? '✏️ Tahrirlash' : '➕ Dars qo\'shish', html, async () => {
     const data = {
       day: $('mDay').value, start: $('mStart').value, end: $('mEnd').value,
@@ -458,7 +429,6 @@ async function deleteLesson(id) {
   } catch (e) { toast('❌ ' + e.message, 'error'); }
 }
 
-// ============ HOMEWORK ============
 async function loadHomework() {
   try {
     homework = await api('/homework');
@@ -472,8 +442,7 @@ async function loadHomework() {
           <small>👨‍🏫 ${escapeHtml(h.author)} • ${new Date(h.createdAt).toLocaleDateString()}</small>
         </div>
         ${currentUser.role !== 'student' ? `<button class="delete-btn" onclick="delHw('${h.id}')">🗑️</button>` : ''}
-      </div>
-    `).join('');
+      </div>`).join('');
   } catch (e) { toast('❌ ' + e.message, 'error'); }
 }
 window.delHw = async (id) => {
@@ -490,8 +459,7 @@ $('addHwBtn').addEventListener('click', () => {
     <div class="modal-actions">
       <button type="button" class="btn-secondary" onclick="document.getElementById('closeModal').click()">Bekor</button>
       <button type="submit" class="btn-primary">Qo'shish</button>
-    </div>
-  `;
+    </div>`;
   openModal('📝 Uy vazifasi', html, async () => {
     try {
       await api('/homework', { method: 'POST', body: JSON.stringify({
@@ -503,7 +471,6 @@ $('addHwBtn').addEventListener('click', () => {
   });
 });
 
-// ============ NOTES ============
 async function loadNotes() {
   try {
     notes = await api('/notes');
@@ -513,8 +480,7 @@ async function loadNotes() {
       <div class="list-item">
         <div><p>${escapeHtml(n.text)}</p><small>${new Date(n.createdAt).toLocaleString()}</small></div>
         <button class="delete-btn" onclick="delNote('${n.id}')">🗑️</button>
-      </div>
-    `).join('');
+      </div>`).join('');
   } catch (e) { toast('❌ ' + e.message, 'error'); }
 }
 window.delNote = async (id) => {
@@ -530,7 +496,6 @@ $('noteForm').addEventListener('submit', async (e) => {
   } catch (e) { toast('❌ ' + e.message, 'error'); }
 });
 
-// ============ ANNOUNCEMENTS ============
 async function loadAnnouncements() {
   try {
     announcements = await api('/announcements');
@@ -544,8 +509,7 @@ async function loadAnnouncements() {
           <small>👤 ${escapeHtml(a.author)} • ${new Date(a.createdAt).toLocaleString()}</small>
         </div>
         ${currentUser.role !== 'student' ? `<button class="delete-btn" onclick="delAnn('${a.id}')">🗑️</button>` : ''}
-      </div>
-    `).join('');
+      </div>`).join('');
   } catch (e) { toast('❌ ' + e.message, 'error'); }
 }
 window.delAnn = async (id) => {
@@ -560,8 +524,7 @@ $('addAnnBtn').addEventListener('click', () => {
     <div class="modal-actions">
       <button type="button" class="btn-secondary" onclick="document.getElementById('closeModal').click()">Bekor</button>
       <button type="submit" class="btn-primary">E'lon qilish</button>
-    </div>
-  `;
+    </div>`;
   openModal('📢 E\'lon qo\'shish', html, async () => {
     try {
       await api('/announcements', { method: 'POST', body: JSON.stringify({
@@ -572,7 +535,6 @@ $('addAnnBtn').addEventListener('click', () => {
   });
 });
 
-// ============ ADMIN ============
 async function loadAdmin() {
   try {
     users = await api('/users');
@@ -580,9 +542,7 @@ async function loadAdmin() {
       <div class="list-item">
         <div><b>${escapeHtml(u.name)}</b> <small>(${u.role}${u.class ? ', ' + u.class : ''})</small></div>
         ${u.id !== currentUser.id ? `<button class="delete-btn" onclick="delUser('${u.id}')">🗑️</button>` : ''}
-      </div>
-    `).join('');
-
+      </div>`).join('');
     $('subjectsList').innerHTML = subjects.map(s => `
       <div class="list-item">
         <div style="display:flex;align-items:center;gap:8px;">
@@ -590,10 +550,7 @@ async function loadAdmin() {
           <b>${escapeHtml(s.name)}</b>
         </div>
         <button class="delete-btn" onclick="delSubject('${s.id}')">🗑️</button>
-      </div>
-    `).join('');
-
-    // Eslatma sozlamalari
+      </div>`).join('');
     await loadNotifSettings();
   } catch (e) { toast('❌ ' + e.message, 'error'); }
 }
@@ -615,8 +572,7 @@ $('addSubjectBtn').addEventListener('click', () => {
     <div class="modal-actions">
       <button type="button" class="btn-secondary" onclick="document.getElementById('closeModal').click()">Bekor</button>
       <button type="submit" class="btn-primary">Qo'shish</button>
-    </div>
-  `;
+    </div>`;
   openModal('📚 Fan qo\'shish', html, async () => {
     try {
       await api('/subjects', { method: 'POST', body: JSON.stringify({
@@ -627,7 +583,6 @@ $('addSubjectBtn').addEventListener('click', () => {
   });
 });
 
-// ============ NOTIFICATION SETTINGS ============
 async function loadNotifSettings() {
   try {
     notifSettings = await api('/settings');
@@ -638,7 +593,7 @@ async function loadNotifSettings() {
       $('notifMessage').value = notifSettings.notification_message || 'Dars boshlanadi';
       $('notifyLate').checked = notifSettings.notify_late === 'true';
     }
-  } catch (e) { console.warn('Sozlamalar yuklanmadi:', e.message); }
+  } catch (e) {}
 }
 
 $('saveNotifSettings')?.addEventListener('click', async () => {
@@ -658,12 +613,12 @@ $('saveNotifSettings')?.addEventListener('click', async () => {
   } catch (e) { toast('❌ ' + e.message, 'error'); }
 });
 
-$('testNotifBtn')?.addEventListener('click', async () => {
-  await playSound($('notifSound').value);
+$('testNotifBtn')?.addEventListener('click', () => {
+  showInAppNotification('🔔 Test xabari', 'Hammasi ishlayapti! Ovoz va banner tayyor.');
+  playSound($('notifSound').value);
   showBrowserNotification('🔔 Test', 'Bu test xabari. Hammasi ishlayapti!');
 });
 
-// ============ NOTIFICATIONS ============
 async function initNotifications() {
   if (!('Notification' in window)) return;
   if (Notification.permission === 'default') {
@@ -675,20 +630,13 @@ function showBrowserNotification(title, body) {
   if (!('Notification' in window)) return;
   if (Notification.permission !== 'granted') return;
   try {
-    new Notification(title, {
-      body,
-      icon: '/icon.svg',
-      badge: '/icon.svg',
-      vibrate: [200, 100, 200],
-    });
+    new Notification(title, { body, icon: '/icon.svg', badge: '/icon.svg' });
   } catch (e) {}
 }
 
-// Ovoz chiqarish (Web Audio API)
 async function playSound(type = 'bell') {
   try {
     const ctx = new (window.AudioContext || window.webkitAudioContext)();
-    
     const playTone = (freq, duration, delay = 0, waveType = 'sine') => {
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
@@ -702,76 +650,45 @@ async function playSound(type = 'bell') {
       osc.start(startTime);
       osc.stop(startTime + duration);
     };
-
-    if (type === 'bell') {
-      playTone(800, 0.8, 0, 'sine');
-      playTone(1200, 0.6, 0.2, 'sine');
-    } else if (type === 'chime') {
-      playTone(600, 0.4, 0, 'triangle');
-      playTone(800, 0.4, 0.3, 'triangle');
-      playTone(1000, 0.6, 0.6, 'triangle');
-    } else if (type === 'alert') {
-      playTone(1000, 0.2, 0, 'square');
-      playTone(1000, 0.2, 0.3, 'square');
-      playTone(1000, 0.2, 0.6, 'square');
-    } else if (type === 'beep') {
-      playTone(440, 0.15, 0, 'sine');
-      playTone(440, 0.15, 0.2, 'sine');
-    }
-  } catch (e) { console.warn('Ovoz xatosi:', e); }
+    if (type === 'bell') { playTone(800, 0.8, 0, 'sine'); playTone(1200, 0.6, 0.2, 'sine'); }
+    else if (type === 'chime') { playTone(600, 0.4, 0, 'triangle'); playTone(800, 0.4, 0.3, 'triangle'); playTone(1000, 0.6, 0.6, 'triangle'); }
+    else if (type === 'alert') { playTone(1000, 0.2, 0, 'square'); playTone(1000, 0.2, 0.3, 'square'); playTone(1000, 0.2, 0.6, 'square'); }
+    else if (type === 'beep') { playTone(440, 0.15, 0, 'sine'); playTone(440, 0.15, 0.2, 'sine'); }
+  } catch (e) {}
 }
 
-// Har daqiqada tekshiramiz
 function checkNotifications() {
   if (!currentUser) return;
   if (notifSettings.notifications_enabled !== 'true') return;
-
   const now = new Date();
   const today = getTodayName();
   const nowMs = now.getTime();
   const minutesBefore = parseInt(notifSettings.notify_minutes_before || '60', 10);
   const notifyLate = notifSettings.notify_late === 'true';
   const message = notifSettings.notification_message || 'Dars boshlanadi';
-
-  // Bugungi darslarni tekshiramiz
   const todayLessons = lessons.filter(l => l.day === today);
-
   todayLessons.forEach(lesson => {
-    // Dars boshlanish vaqtini hisoblaymiz
     const [h, m] = lesson.start.split(':').map(Number);
     const lessonDate = new Date();
     lessonDate.setHours(h, m, 0, 0);
     const lessonMs = lessonDate.getTime();
-
-    const diffMs = lessonMs - nowMs;
-    const diffMin = diffMs / 60000;
-
-    // Kalit — kun + dars ID (har kuni yangi)
+    const diffMin = (lessonMs - nowMs) / 60000;
     const today_str = now.toISOString().slice(0, 10);
     const key = `notified_${today_str}_${lesson.id}_${lesson.start}`;
     if (localStorage.getItem(key)) return;
-
-    // Shart: dars N daqiqadan keyin boshlanadi YOKI yaqinda boshlandi (kechiktirilgan holat)
-    const shouldNotify = 
+    const shouldNotify =
       (diffMin <= minutesBefore && diffMin > 0) ||
       (notifyLate && diffMin <= 0 && diffMin >= -1);
-
     if (shouldNotify) {
-      const timeInfo = diffMin > 0 
-        ? `${Math.round(diffMin)} daqiqadan keyin` 
-        : 'hozir boshlanadi';
-      
-      showBrowserNotification(
-        `🔔 ${lesson.subject}`,
-        `${message} — ${lesson.start} (${timeInfo}) • ${lesson.room || ''} xona`
-      );
-      
+      const timeInfo = diffMin > 0 ? `${Math.round(diffMin)} daqiqadan keyin` : 'hozir boshlanadi';
+      const title = `🔔 ${lesson.subject}`;
+      const body = `${message} — ${lesson.start} (${timeInfo}) • ${lesson.room || ''} xona`;
+      showInAppNotification(title, body, 15000);
       playSound(notifSettings.notification_sound || 'bell');
+      showBrowserNotification(title, body);
       localStorage.setItem(key, '1');
     }
   });
-
-  // Eski kalitlarni tozalash (bir haftadan eski)
   cleanupOldNotifKeys();
 }
 
@@ -795,21 +712,15 @@ function cleanupOldNotifKeys() {
 let notifTimer = null;
 function startNotifTimer() {
   if (notifTimer) return;
-  // Har 30 sekundda tekshiramiz
   notifTimer = setInterval(checkNotifications, 30000);
-  // Birinchi tekshirish darhol
   setTimeout(checkNotifications, 3000);
 }
 
-// Notif tugmasini bosganda ruxsat so'rash
 $('notifBtn')?.addEventListener('click', async () => {
-  if (!('Notification' in window)) {
-    toast('❌ Brauzer xabarnomani qo\'llab-quvvatlamaydi', 'error');
-    return;
-  }
+  if (!('Notification' in window)) { toast('❌ Brauzer xabarnomani qo\'llab-quvvatlamaydi', 'error'); return; }
   if (Notification.permission === 'granted') {
     toast('✅ Xabarnomalar yoqilgan');
-    showBrowserNotification('🔔 Test', 'Xabarnomalar ishlayapti!');
+    showInAppNotification('🔔 Test', 'Xabarnomalar ishlayapti!');
     playSound(notifSettings.notification_sound || 'bell');
   } else if (Notification.permission === 'denied') {
     toast('❌ Xabarnomalar bloklangan. Brauzer sozlamalaridan yoqing', 'error');
@@ -817,14 +728,14 @@ $('notifBtn')?.addEventListener('click', async () => {
     const perm = await Notification.requestPermission();
     if (perm === 'granted') {
       toast('✅ Xabarnomalar yoqildi!');
-      showBrowserNotification('🔔 Tayyor', 'Endi eslatmalarni olasiz');
+      showInAppNotification('🔔 Tayyor', 'Endi eslatmalarni olasiz');
+      playSound('bell');
     } else {
       toast('❌ Ruxsat berilmadi', 'error');
     }
   }
 });
 
-// ============ BOTTOM NAV ============
 function initBottomNav() {
   document.querySelectorAll('.bottom-nav-item').forEach(btn => {
     btn.onclick = () => {
@@ -834,7 +745,6 @@ function initBottomNav() {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     };
   });
-
   const fab = $('fabBtn');
   if (fab) {
     fab.onclick = () => {
@@ -862,7 +772,6 @@ function updateFabVisibility() {
   }
 }
 
-// ============ PWA ============
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('/service-worker.js').catch(() => {});
@@ -892,10 +801,8 @@ function showInstallButton() {
   document.body.appendChild(btn);
 }
 
-// ============ INIT ============
 (async function init() {
   initOnboarding();
-  
   if (token) {
     try {
       currentUser = await api('/auth/me');

@@ -3,7 +3,7 @@ const { Pool } = require('pg');
 const DATABASE_URL = process.env.DATABASE_URL;
 
 if (!DATABASE_URL) {
-  console.error("❌ DATABASE_URL yo'q! Environment variable qo'shing (Neon connection string).");
+  console.error("❌ DATABASE_URL yo'q!");
   process.exit(1);
 }
 
@@ -13,9 +13,7 @@ try {
   u.searchParams.delete('sslmode');
   u.searchParams.delete('channel_binding');
   connectionString = u.toString();
-} catch (e) {
-  console.error("⚠️ DATABASE_URL formati g'alati");
-}
+} catch (e) {}
 
 const pool = new Pool({
   connectionString,
@@ -26,9 +24,7 @@ const pool = new Pool({
   keepAlive: true,
 });
 
-pool.on('error', (err) => {
-  console.error("⚠️ Pool xatosi:", err.message);
-});
+pool.on('error', (err) => console.error("⚠️ Pool xatosi:", err.message));
 
 const SCHEMA = `
 CREATE TABLE IF NOT EXISTS users (
@@ -41,7 +37,6 @@ CREATE TABLE IF NOT EXISTS users (
   hash text NOT NULL,
   created_at timestamptz NOT NULL DEFAULT now()
 );
-
 CREATE TABLE IF NOT EXISTS lessons (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   day text NOT NULL,
@@ -54,14 +49,12 @@ CREATE TABLE IF NOT EXISTS lessons (
   created_by text NOT NULL DEFAULT '',
   created_at timestamptz NOT NULL DEFAULT now()
 );
-
 CREATE TABLE IF NOT EXISTS subjects (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   name text NOT NULL,
   color text NOT NULL DEFAULT '#6366f1',
   created_at timestamptz NOT NULL DEFAULT now()
 );
-
 CREATE TABLE IF NOT EXISTS homework (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   subject text NOT NULL,
@@ -72,14 +65,12 @@ CREATE TABLE IF NOT EXISTS homework (
   created_by text NOT NULL DEFAULT '',
   created_at timestamptz NOT NULL DEFAULT now()
 );
-
 CREATE TABLE IF NOT EXISTS notes (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   body text NOT NULL,
   created_at timestamptz NOT NULL DEFAULT now()
 );
-
 CREATE TABLE IF NOT EXISTS favorites (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -87,7 +78,6 @@ CREATE TABLE IF NOT EXISTS favorites (
   created_at timestamptz NOT NULL DEFAULT now(),
   UNIQUE (user_id, lesson_id)
 );
-
 CREATE TABLE IF NOT EXISTS announcements (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   title text NOT NULL,
@@ -96,13 +86,11 @@ CREATE TABLE IF NOT EXISTS announcements (
   author_role text NOT NULL DEFAULT '',
   created_at timestamptz NOT NULL DEFAULT now()
 );
-
 CREATE TABLE IF NOT EXISTS tokens (
   token text PRIMARY KEY,
   user_id uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   created_at timestamptz NOT NULL DEFAULT now()
 );
-
 CREATE TABLE IF NOT EXISTS settings (
   key text PRIMARY KEY,
   value text NOT NULL,
